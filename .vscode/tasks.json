@@ -9,15 +9,18 @@
         "-m",
         "pharmalist.cli",
         "publish-report",
-        "260508_Musashino_採用医薬品/references",
-        "旧採用医薬品リスト",
+        "../260508_Musashino_採用医薬品/references",
+        "../旧採用医薬品リスト",
         "--name",
-        "vscode-task"
+        "vscode-task",
+        "--audit-root",
+        "../audit-reports"
       ],
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "PYTHONPATH": "${workspaceFolder}/src"
+          "PYTHONPATH": "${workspaceFolder}/src",
+          "PHARMALIST_CONFIG": "${workspaceFolder}/config/defaults.json"
         }
       },
       "group": {
@@ -36,7 +39,7 @@
       "type": "shell",
       "command": "open",
       "args": [
-        "docs/audit-reports/latest/diff-report.html"
+        "../audit-reports/latest/diff-report.html"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

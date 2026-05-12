@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リポジトリ監査レポート | 個人配布向けクリーンアップ設計</title>
+  <style>
+    :root {
+      --bg: #f7f3ea;
+      --panel: rgba(255, 252, 246, 0.94);
+      --ink: #1f2933;
+      --muted: #5a6570;
+      --line: rgba(24, 58, 92, 0.15);
+      --accent: #0f5c4d;
+      --accent-soft: #d9efe7;
+      --warn: #8a2d1d;
+      --warn-soft: #fde6df;
+      --risk: #7a1f1f;
+      --shadow: 0 24px 60px rgba(19, 33, 53, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      line-height: 1.7;
+      background:
+        radial-gradient(circle at top left, rgba(15, 92, 77, 0.16), transparent 30%),
+        radial-gradient(circle at right bottom, rgba(204, 125, 59, 0.12), transparent 36%),
+        var(--bg);
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+    section, .hero {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 24px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.25;
+    }
+    h1 { font-size: clamp(2rem, 4vw, 3.3rem); }
+    h2 { font-size: 1.55rem; margin-top: 4px; }
+    h3 { font-size: 1.05rem; }
+    p { margin: 0 0 14px; }
+    .lead { color: var(--muted); font-size: 1.04rem; max-width: 900px; }
+    .pill {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      background: rgba(255,255,255,0.64);
+    }
+    .risk-high {
+      border-color: rgba(122, 31, 31, 0.25);
+      background: linear-gradient(180deg, rgba(253, 230, 223, 0.94), rgba(255,255,255,0.7));
+    }
+    .risk-medium {
+      border-color: rgba(138, 45, 29, 0.22);
+      background: linear-gradient(180deg, rgba(255, 243, 220, 0.9), rgba(255,255,255,0.7));
+    }
+    .metric {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .small { color: var(--muted); font-size: 0.95rem; }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+      background: rgba(15, 92, 77, 0.08);
+      border-radius: 6px;
+      padding: 0.1em 0.35em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { width: 18%; }
+    ul, ol { padding-left: 1.2rem; margin: 0; }
+    li + li { margin-top: 8px; }
+    .callout {
+      border-left: 4px solid var(--warn);
+      padding: 14px 16px;
+      background: var(--warn-soft);
+      border-radius: 0 14px 14px 0;
+      margin-top: 14px;
+    }
+    .status {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .status-high { background: #f6d7d2; color: var(--risk); }
+    .status-medium { background: #fbe8cf; color: var(--warn); }
+    .status-ok { background: #dcefe8; color: var(--accent); }
+    @media (max-width: 720px) {
+      main { padding: 20px 14px 48px; }
+      section, .hero { padding: 20px; border-radius: 20px; }
+      table, tbody, tr, th, td { display: block; width: 100%; }
+      th { border-bottom: none; padding-bottom: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="pill">Repository Audit / Personal Distribution</div>
+      <h1>個人配布向けリポジトリ監査レポート</h1>
+      <p class="lead">このレポートは、現行リポジトリを「開発兼データ保管庫」から「個人配布向けの最小・安全・保守可能なコードベース」へ再編する前提で監査した結果です。責務分離だけでは不十分で、履歴の掃除、実データの隔離、生成物の除去、署名運用情報の整理を優先する必要があります。</p>
+      <div class="grid">
+        <div class="card">
+          <div class="metric">96</div>
+          <div>tracked 監査生成物</div>
+          <div class="small">docs/audit-reports 配下</div>
+        </div>
+        <div class="card">
+          <div class="metric">8</div>
+          <div>tracked 実データ系ファイル</div>
+          <div class="small">新 CSV 3 + 旧 CSV 5</div>
+        </div>
+        <div class="card">
+          <div class="metric">147MB</div>
+          <div>配布物ディレクトリ容量</div>
+          <div class="small">dist は現在 untracked だが作業汚染源</div>
+        </div>
+        <div class="card">
+          <div class="metric">26MB</div>
+          <div>監査レポート履歴容量</div>
+          <div class="small">docs/audit-reports</div>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>総合判定</h2>
+      <table>
+        <tr>
+          <th>判定</th>
+          <td>公開配布向けではなく、個人利用向けでもまだ「クリーンな配布母体」ではありません。理由は、コード・入力実データ・旧システム由来の参照 CSV・監査生成物・リリース運用スクリプトが同じ履歴に混在しているためです。</td>
+        </tr>
+        <tr>
+          <th>最優先</th>
+          <td>責務分離より先に、実データと生成物を現行履歴から切り離すことです。これを後回しにすると、private 運用でも repo の役割が曖昧になり、将来の共有や再利用時に毎回クリーニングが必要になります。</td>
+        </tr>
+        <tr>
+          <th>推奨ゴール</th>
+          <td>この repo は「変換エンジンと最小限の運用ドキュメント」に限定し、入力データ・旧比較用マスタ・生成済みレポート・配布物は外部ワークディレクトリへ退避する構成にします。</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>主要 Findings</h2>
+      <div class="grid">
+        <div class="card risk-high">
+          <div class="status status-high">High</div>
+          <h3>実データがコードと同じ履歴に入っている</h3>
+          <p><code>260508_Musashino_採用医薬品</code> 配下の 3 CSV と <code>旧採用医薬品リスト</code> 配下の 5 CSV が tracked です。個人配布へ切り替えるなら、配布対象のコード repo に残す理由は弱く、将来の accidental share の温床になります。</p>
+        </div>
+        <div class="card risk-high">
+          <div class="status status-high">High</div>
+          <h3>監査生成物 96 ファイルが tracked</h3>
+          <p><code>docs/audit-reports</code> に比較履歴、生成 CSV、HTML/JSON レポートが蓄積されています。これは再生成可能な成果物であり、リポジトリの本質的な資産ではありません。</p>
+        </div>
+        <div class="card risk-high">
+          <div class="status status-high">High</div>
+          <h3>構成ファイルが実データ前提に固定されている</h3>
+          <p><code>config/defaults.json</code> が <code>旧採用医薬品リスト</code> 内の具体ファイル名へ直接依存しています。コード repo からデータを外す前提なら、設定の抽象化とパス分離が必要です。</p>
+        </div>
+        <div class="card risk-medium">
+          <div class="status status-medium">Medium</div>
+          <h3>個人配布には過剰な release/signing 面が repo 主体になっている</h3>
+          <p><code>.github/workflows/macos-standalone-release.yml</code> と各種 signing/notary スクリプトは有効ですが、個人配布では「常設 CI で notarize する」責務を repo 本体から分離したほうが運用事故が減ります。</p>
+        </div>
+        <div class="card risk-medium">
+          <div class="status status-medium">Medium</div>
+          <h3>README と配布 docs が公開配布寄り</h3>
+          <p>現行の README は配布・署名・GitHub Actions の説明が前面です。個人配布向けに整理するなら、開発 repo 用 README と配布 bundle 用 README の責務を分けるべきです。</p>
+        </div>
+        <div class="card">
+          <div class="status status-ok">Keep</div>
+          <h3>コア変換ロジックは十分に分離済み</h3>
+          <p><code>src/pharmalist</code> は 12 ファイルでまとまっており、変換エンジン本体として独立可能です。クリーンアップ対象は主に周辺資産です。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>責務別の再設計案</h2>
+      <table>
+        <tr>
+          <th>残す</th>
+          <td><code>src/</code>, <code>tests/</code>, <code>scripts/</code> のうち開発に必要なもの, <code>config/</code>, 最小限の <code>docs/</code>, <code>assets/</code>, <code>pyproject.toml</code></td>
+        </tr>
+        <tr>
+          <th>外へ出す</th>
+          <td>新入力 CSV、旧採用医薬品リスト、Excel 原本、生成済み監査レポート、配布 ZIP / .app</td>
+        </tr>
+        <tr>
+          <th>別 repo か private archive</th>
+          <td>署名証跡、notarization 実行ログ、個別リリースごとの成果物、運用メモ</td>
+        </tr>
+        <tr>
+          <th>役割見直し</th>
+          <td>README は開発者向けに絞り、個人配布説明は bundle 同梱の別 README に分離</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>境界の確定</h2>
+      <table>
+        <tr>
+          <th>repo に残す</th>
+          <td><code>.github/workflows/macos-standalone-release.yml</code>, <code>.gitignore</code>, <code>LICENSE</code>, <code>README.md</code>, <code>assets/</code>, <code>packaging/</code>, <code>pyproject.toml</code>, <code>src/</code>, <code>tests/</code>, <code>docs/requirements-spec.html</code>, <code>docs/macos-distribution-guide.html</code>, この監査 HTML 2 本</td>
+        </tr>
+        <tr>
+          <th>残すが先に修正</th>
+          <td><code>config/defaults.json</code>, <code>.vscode/tasks.json</code>, <code>launch_pharmalist.command</code>, <code>scripts/build_macos_app.sh</code>, <code>scripts/build_macos_standalone.sh</code>, <code>scripts/sign_and_notarize_macos.sh</code>, <code>scripts/setup_local_release_machine.sh</code>, <code>scripts/configure_github_actions_secrets.sh</code>。いずれも repo 内実データ前提を外してから keep する。</td>
+        </tr>
+        <tr>
+          <th>repo 外へ出す</th>
+          <td><code>260508_Musashino_採用医薬品/</code>, <code>旧採用医薬品リスト/</code>, <code>簡易 医薬品集.xlsx</code>, <code>docs/audit-reports/</code>, <code>dist/</code></td>
+        </tr>
+        <tr>
+          <th>repo 内で場所変更</th>
+          <td><code>RELEASE_NOTES_TEMPLATE.md</code> はルート直下ではなく <code>docs/templates/</code> などのテンプレート領域へ移すのが妥当</td>
+        </tr>
+      </table>
+      <div class="callout">
+        この境界により、個人配布向け cleaning の第 1 段階では「実データ・生成物を外に出す」「実データに固定された scripts と config を抽象化する」までを必須範囲とし、workflow や packaging は即削除対象にしません。
+      </div>
+    </section>
+
+    <section>
+      <h2>priority 順の cleaning 対象</h2>
+      <ol>
+        <li>tracked 実データ: <code>260508_Musashino_採用医薬品</code>, <code>旧採用医薬品リスト</code>, <code>簡易 医薬品集.xlsx</code></li>
+        <li>tracked 生成物: <code>docs/audit-reports</code></li>
+        <li>設定の実データ固定参照: <code>config/defaults.json</code></li>
+        <li>個人配布に過剰な常設リリース運用: workflow と signing scripts の置き場所・実行条件</li>
+        <li>README / docs の責務分離</li>
+      </ol>
+      <div class="callout">
+        現在の一番大きいリスクは「コードの質」ではなく「資産の混在」です。先にフォルダをきれいに見せるのではなく、履歴と役割を切り分ける設計が必要です。
+      </div>
+    </section>
+
+    <section>
+      <h2>推奨ゴール構成</h2>
+      <table>
+        <tr>
+          <th>repo</th>
+          <td>
+            <code>src/</code>, <code>tests/</code>, <code>config/templates/</code>, <code>docs/</code>, <code>scripts/</code><br />
+            実データを含まない最小の変換エンジン
+          </td>
+        </tr>
+        <tr>
+          <th>workspace-data</th>
+          <td>
+            <code>inputs/current/</code>, <code>references/legacy/</code>, <code>reports/</code>, <code>releases/</code><br />
+            個人利用のローカル専用ワークディレクトリ
+          </td>
+        </tr>
+        <tr>
+          <th>private archive</th>
+          <td>
+            notarization 実行ログ、過去配布 ZIP、証跡メモ
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>結論</h2>
+      <p>この repo は、少数ファイルの責務分離だけで clean にはなりません。必要なのは「コード repo」「個人用データ置き場」「配布成果物置き場」を分離し、さらに既存 Git 履歴から実データと監査生成物を消す段階的作業です。</p>
+      <p>実装手順は別紙の <code>repo-cleaning-implementation-guide.html</code> にまとめます。そちらは、実際のブランチ運用、移設順序、履歴 rewrite、完了判定まで含めた手順書です。</p>
+    </section>
+  </main>
+</body>
+</html>

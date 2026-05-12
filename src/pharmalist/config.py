@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 
-DEFAULT_CONFIG_PATH = Path("config/defaults.json")
+def default_config_path() -> Path:
+    configured = os.environ.get("PHARMALIST_CONFIG")
+    return Path(configured) if configured else Path("config/defaults.json")
 
 
 @dataclass(frozen=True)
@@ -81,7 +84,7 @@ def _resolve_optional_path(base_dir: Path, raw_path: str | None) -> Path | None:
 
 
 def load_config(config_path: Path | None = None) -> AppConfig:
-    path = (config_path or DEFAULT_CONFIG_PATH).expanduser().resolve()
+    path = (config_path or default_config_path()).expanduser().resolve()
     with path.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
 

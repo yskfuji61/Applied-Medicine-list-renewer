@@ -899,7 +899,7 @@ class ProfileTests(unittest.TestCase):
                     source,
                     reference_dir,
                     "latest",
-                    config_path=Path("/Users/fujinamiyuususumu/musashino/薬剤リスト/config/defaults.json"),
+                    config_path=(Path(__file__).resolve().parents[1] / "config" / "defaults.json"),
                 )
             finally:
                 os.chdir(original_cwd)

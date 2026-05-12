@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リポジトリ cleaning 実装手順書</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --panel: rgba(255, 251, 244, 0.94);
+      --ink: #202733;
+      --muted: #5b6570;
+      --line: rgba(55, 68, 87, 0.14);
+      --accent: #7a3e10;
+      --accent-soft: #f6e2d1;
+      --good: #0f5c4d;
+      --good-soft: #dcefe7;
+      --shadow: 0 24px 60px rgba(24, 32, 44, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      line-height: 1.72;
+      background:
+        radial-gradient(circle at top right, rgba(122, 62, 16, 0.15), transparent 30%),
+        radial-gradient(circle at left bottom, rgba(15, 92, 77, 0.12), transparent 34%),
+        var(--bg);
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+    section, .hero {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      margin-bottom: 24px;
+    }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.25; }
+    h1 { font-size: clamp(2rem, 4vw, 3.15rem); }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.04rem; }
+    p { margin: 0 0 14px; }
+    .pill {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .lead { color: var(--muted); font-size: 1.03rem; max-width: 900px; }
+    .phase {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 20px;
+      background: rgba(255,255,255,0.65);
+      margin-top: 18px;
+    }
+    .step-no {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--good-soft);
+      color: var(--good);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    pre {
+      margin: 12px 0 0;
+      padding: 16px;
+      overflow: auto;
+      border-radius: 16px;
+      background: #18212b;
+      color: #eef6ff;
+      font-family: "SFMono-Regular", Menlo, monospace;
+      font-size: 0.92rem;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+      background: rgba(122, 62, 16, 0.09);
+      padding: 0.1em 0.35em;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { width: 22%; }
+    ul, ol { margin: 0; padding-left: 1.2rem; }
+    li + li { margin-top: 8px; }
+    .check {
+      border-left: 4px solid var(--good);
+      padding: 14px 16px;
+      border-radius: 0 14px 14px 0;
+      background: var(--good-soft);
+      margin-top: 14px;
+    }
+    .warn {
+      border-left: 4px solid #a94825;
+      padding: 14px 16px;
+      border-radius: 0 14px 14px 0;
+      background: #fde8dc;
+      margin-top: 14px;
+    }
+    @media (max-width: 720px) {
+      main { padding: 20px 14px 48px; }
+      section, .hero { padding: 20px; border-radius: 20px; }
+      table, tbody, tr, th, td { display: block; width: 100%; }
+      th { border-bottom: none; padding-bottom: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="pill">Implementation Playbook</div>
+      <h1>個人配布向け repo cleaning 実装手順書</h1>
+      <p class="lead">この手順書は、現行 repo を壊さずに監査結果を反映するための実装レベルの playbook です。目的は、コード repo を最小化し、個人利用データと生成物を分離し、将来 accidental share しても被害が出にくい構造にすることです。</p>
+    </div>
+
+    <section>
+      <h2>完了条件</h2>
+      <table>
+        <tr><th>コード repo</th><td>実データ、旧マスタ、生成済みレポート、配布物が tracked されていない</td></tr>
+        <tr><th>設定</th><td>データパスが repo 外ワークスペースを指せる</td></tr>
+        <tr><th>README</th><td>開発 repo 用と配布用が分かれている</td></tr>
+        <tr><th>履歴</th><td>必要なら実データと監査生成物が Git 履歴から除去されている</td></tr>
+        <tr><th>検証</th><td>テスト、最小変換、個人配布パッケージ生成が再現可能</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>確定した境界</h2>
+      <table>
+        <tr>
+          <th>keep</th>
+          <td><code>.github/</code>, <code>.gitignore</code>, <code>.vscode/tasks.json</code> の枠組み, <code>LICENSE</code>, <code>README.md</code>, <code>assets/</code>, <code>packaging/</code>, <code>pyproject.toml</code>, <code>src/</code>, <code>tests/</code>, <code>docs/requirements-spec.html</code>, <code>docs/macos-distribution-guide.html</code>, cleaning 関連 HTML</td>
+        </tr>
+        <tr>
+          <th>keep after refactor</th>
+          <td><code>config/defaults.json</code>, <code>launch_pharmalist.command</code>, <code>scripts/build_macos_app.sh</code>, <code>scripts/build_macos_standalone.sh</code>, <code>scripts/sign_and_notarize_macos.sh</code>, <code>scripts/setup_local_release_machine.sh</code>, <code>scripts/configure_github_actions_secrets.sh</code>。repo 内の具体データパス依存を除去したあとで keep する。</td>
+        </tr>
+        <tr>
+          <th>move out</th>
+          <td><code>260508_Musashino_採用医薬品/</code>, <code>旧採用医薬品リスト/</code>, <code>簡易 医薬品集.xlsx</code>, <code>docs/audit-reports/</code>, <code>dist/</code></td>
+        </tr>
+        <tr>
+          <th>relocate in repo</th>
+          <td><code>RELEASE_NOTES_TEMPLATE.md</code> はルートではなく <code>docs/templates/</code> などへ移動する。配布用 README も将来的に同じ領域へテンプレート化する。</td>
+        </tr>
+      </table>
+      <div class="check">この分類を以後の cleaning 実装の正式な境界とする。迷った場合は「実データに依存するか」「再生成可能か」「コード repo を見せたときに説明コストが高いか」で判定する。</div>
+    </section>
+
+    <section>
+      <h2>Phase 0: 凍結とバックアップ</h2>
+      <div class="phase">
+        <div class="step-no">0</div>
+        <h3>現行状態を保全する</h3>
+        <ol>
+          <li>新しい cleanup 用ブランチを切る。</li>
+          <li>現在の main をタグで退避する。</li>
+          <li>実データと配布物を repo 外へフルコピーする。</li>
+        </ol>
+        <pre>git checkout -b cleanup/personal-distribution
+git tag repo-before-cleaning-20260513
+mkdir -p ../pharmalist-private-workspace/{inputs,references,reports,releases,archive}
+cp -R 260508_Musashino_採用医薬品 ../pharmalist-private-workspace/inputs/current
+cp -R 旧採用医薬品リスト ../pharmalist-private-workspace/references/legacy
+cp -R docs/audit-reports ../pharmalist-private-workspace/reports/audit-reports
+cp -R dist ../pharmalist-private-workspace/releases/current</pre>
+        <div class="warn">履歴 rewrite の前に、repo 外バックアップがない状態で削除を始めないこと。ここを飛ばすと復旧コストが一番高いです。</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 1: tracked 資産の切り離し</h2>
+      <div class="phase">
+        <div class="step-no">1</div>
+        <h3>repo 内から remove する対象</h3>
+        <ol>
+          <li><code>260508_Musashino_採用医薬品</code></li>
+          <li><code>旧採用医薬品リスト</code></li>
+          <li><code>簡易 医薬品集.xlsx</code></li>
+          <li><code>docs/audit-reports</code></li>
+        </ol>
+        <pre>git rm -r --cached 260508_Musashino_採用医薬品 旧採用医薬品リスト docs/audit-reports
+git rm --cached '簡易 医薬品集.xlsx'</pre>
+        <p>ここでは <code>--cached</code> を使い、まず Git 管理から外します。ファイル実体はワークツリーに残るため、repo 外移設が終わるまで安全です。</p>
+      </div>
+      <div class="phase">
+        <div class="step-no">2</div>
+        <h3>.gitignore を強化する</h3>
+        <pre># local data workspaces
+/260508_Musashino_採用医薬品/
+/旧採用医薬品リスト/
+/簡易 医薬品集.xlsx
+/docs/audit-reports/
+/dist/
+/docs/templates/release-assets/
+/tmp/
+/reports/
+/releases/</pre>
+        <div class="check">目的は「今後うっかり add されないこと」です。履歴掃除はこの後です。</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 2: 設定と責務の分離</h2>
+      <div class="phase">
+        <div class="step-no">3</div>
+        <h3>config/defaults.json をテンプレート化する</h3>
+        <p>現状の <code>config/defaults.json</code> は具体ファイル名へ直結しています。これを repo 内テンプレートとローカル override に分けます。</p>
+        <table>
+          <tr><th>repo に残す</th><td><code>config/defaults.template.json</code> またはサンプル設定</td></tr>
+          <tr><th>local に置く</th><td><code>../pharmalist-private-workspace/config/local.json</code></td></tr>
+          <tr><th>アプリ側</th><td>環境変数または CLI オプションで local config を受け取る</td></tr>
+        </table>
+        <pre>export PHARMALIST_CONFIG=../pharmalist-private-workspace/config/local.json
+PYTHONPATH=src python3 -m pharmalist.cli publish-report \
+  ../pharmalist-private-workspace/inputs/current/references \
+  ../pharmalist-private-workspace/references/legacy \
+  --name local-run</pre>
+      </div>
+      <div class="phase">
+        <div class="step-no">4</div>
+        <h3>docs の責務を分ける</h3>
+        <ol>
+          <li>repo の docs には要件、設計、運用原則だけを残す。</li>
+          <li>生成レポートは local workspace の <code>reports/</code> に出力する。</li>
+          <li>配布 bundle 用 README は build 時に生成または別テンプレートから複製する。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 3: packaging / signing 運用の整理</h2>
+      <div class="phase">
+        <div class="step-no">5</div>
+        <h3>個人配布前提に release 運用を縮退する</h3>
+        <p>個人配布では、常設の GitHub Actions workflow は必須ではありません。次の 2 方式のどちらかに寄せます。</p>
+        <table>
+          <tr><th>方式 A</th><td>workflow は残すが手動専用のまま維持し、README からは隠す</td></tr>
+          <tr><th>方式 B</th><td>workflow を <code>ops/</code> 相当へ退避、日常 repo からは外す</td></tr>
+        </table>
+        <p>個人配布なら方式 A で十分です。scripts 自体は残し、日常の開発経路から見えにくくするだけで事故率は下がります。</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 4: 履歴の掃除</h2>
+      <div class="phase">
+        <div class="step-no">6</div>
+        <h3>現行 Git 履歴から除去する</h3>
+        <p>private repo であっても、実データと監査成果物を future-safe にしたいなら履歴 rewrite を推奨します。最も扱いやすいのは <code>git filter-repo</code> です。</p>
+        <pre>brew install git-filter-repo
+git filter-repo \
+  --path 260508_Musashino_採用医薬品 \
+  --path 旧採用医薬品リスト \
+  --path '簡易 医薬品集.xlsx' \
+  --path docs/audit-reports \
+  --invert-paths</pre>
+        <p>rewrite 後は remote を強制更新する必要があります。</p>
+        <pre>git push origin --force --all
+git push origin --force --tags</pre>
+        <div class="warn">すでに clone 済みの他環境があるなら、rewrite 後は全 clone を作り直す前提で行います。</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 5: 検証</h2>
+      <div class="phase">
+        <div class="step-no">7</div>
+        <h3>検証項目</h3>
+        <ol>
+          <li><code>git ls-files</code> に実データと監査生成物が残っていない。</li>
+          <li><code>git log --stat</code> で rewrite 対象が見えない。</li>
+          <li><code>PYTHONPATH=src python3 -m unittest tests.test_profile</code> が通る。</li>
+          <li>repo 外 workspace を指して変換が動く。</li>
+          <li>必要なら <code>./scripts/build_macos_standalone.sh</code> が repo 外データ前提でも成立する。</li>
+        </ol>
+        <pre>git ls-files | grep -E '260508_Musashino|旧採用医薬品リスト|audit-reports|簡易 医薬品集.xlsx'
+PYTHONPATH=src python3 -m unittest tests.test_profile</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>最終的な推奨ディレクトリ</h2>
+      <pre>Applied-Medicine-list-renewer/
+  src/
+  tests/
+  config/
+    defaults.template.json
+  docs/
+    requirements-spec.html
+    repo-cleaning-audit.html
+    repo-cleaning-implementation-guide.html
+  scripts/
+  assets/
+
+pharmalist-private-workspace/
+  config/
+    local.json
+  inputs/
+    current/
+  references/
+    legacy/
+  reports/
+  releases/</pre>
+      <div class="check">この構成にすると、repo を誰かに見せても「コード以外が漏れない」状態に近づきます。個人配布でも長期保守しやすい形です。</div>
+    </section>
+  </main>
+</body>
+</html>

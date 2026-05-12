@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -112,8 +113,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--pharmacological-code-master",
         help="Optional CSV master for pharmacological code hierarchy.",
     )
+    publish_parser.add_argument(
+        "--audit-root",
+        help="Optional directory where audit reports will be written. Defaults to PHARMALIST_AUDIT_ROOT or docs/audit-reports.",
+    )
 
     return parser
+
+
+def _default_audit_root() -> Path:
+    configured = os.environ.get("PHARMALIST_AUDIT_ROOT")
+    return Path(configured) if configured else Path("docs") / "audit-reports"
 
 
 def render_profile_as_json(path: Path) -> str:
@@ -339,8 +349,9 @@ def render_publish_report(
     report_name: str,
     config_path: Path | None = None,
     pharmacological_code_master: Path | None = None,
+    audit_root: Path | None = None,
 ) -> str:
-    audit_root = Path("docs").resolve() / "audit-reports"
+    audit_root = (audit_root or _default_audit_root()).expanduser().resolve()
     latest_root = audit_root / "latest"
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     safe_name = "-".join(part for part in report_name.replace("_", "-").split("-") if part) or "audit"
@@ -440,6 +451,7 @@ def main() -> int:
             if args.pharmacological_code_master
             else None
         )
+        audit_root = Path(args.audit_root).expanduser().resolve() if args.audit_root else None
         print(
             render_publish_report(
                 target,
@@ -447,6 +459,7 @@ def main() -> int:
                 args.name,
                 config_path=config_path,
                 pharmacological_code_master=master_path,
+                audit_root=audit_root,
             )
         )
         return 0

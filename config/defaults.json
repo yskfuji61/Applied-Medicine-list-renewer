@@ -6,7 +6,7 @@
     "old_worksheet": 4
   },
   "masters": {
-    "pharmacological_code": "旧採用医薬品リスト/薬効コード-表1.csv"
+    "pharmacological_code": "../旧採用医薬品リスト/薬効コード-表1.csv"
   },
   "pharmacological_hierarchy": {
     "expansion_modes": [
@@ -30,7 +30,7 @@
   },
   "pharmacological_fill": {
     "supplement_sources": [
-      "旧採用医薬品リスト/■作業シート-表1.csv"
+      "../旧採用医薬品リスト/■作業シート-表1.csv"
     ],
     "match_fields": [
       "tensu_code",
@@ -42,7 +42,7 @@
   "legacy_view_scope": {
     "enabled": true,
     "reference_sources": [
-      "旧採用医薬品リスト/■作業シート-表1.csv"
+      "../旧採用医薬品リスト/■作業シート-表1.csv"
     ],
     "match_fields": [
       "tensu_code",
@@ -53,7 +53,7 @@
   "legacy_view_overrides": {
     "enabled": true,
     "reference_sources": [
-      "旧採用医薬品リスト/■作業シート-表1.csv"
+      "../旧採用医薬品リスト/■作業シート-表1.csv"
     ],
     "match_fields": [
       "tensu_code",
@@ -71,11 +71,11 @@
   "legacy_view_order": {
     "enabled": true,
     "source_files": {
-      "worksheet": "旧採用医薬品リスト/■作業シート-表1.csv",
-      "generic": "旧採用医薬品リスト/一般名順-表1.csv",
-      "product": "旧採用医薬品リスト/製品名順-表1.csv",
-      "pharmacological": "旧採用医薬品リスト/薬効順-表1.csv",
-      "pharmacological_code": "旧採用医薬品リスト/薬効コード-表1.csv"
+      "worksheet": "../旧採用医薬品リスト/■作業シート-表1.csv",
+      "generic": "../旧採用医薬品リスト/一般名順-表1.csv",
+      "product": "../旧採用医薬品リスト/製品名順-表1.csv",
+      "pharmacological": "../旧採用医薬品リスト/薬効順-表1.csv",
+      "pharmacological_code": "../旧採用医薬品リスト/薬効コード-表1.csv"
     }
   },
   "legacy_view_adjustments": {
