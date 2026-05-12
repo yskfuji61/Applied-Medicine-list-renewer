@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+WORKSPACE_DIR=$(cd "$PROJECT_DIR/.." && pwd)
 APP_NAME="薬剤リスト変換アプリ"
 RELEASE_NAME="macos-standalone-release"
 DIST_DIR="$PROJECT_DIR/dist"
@@ -17,6 +18,9 @@ ICON_PNG="$PYI_ROOT/app-icon.png"
 ICONSET_DIR="$PYI_ROOT/AppIcon.iconset"
 ICNS_PATH="$PYI_ROOT/AppIcon.icns"
 ZIP_PATH="$DIST_DIR/${APP_NAME}-standalone-macos.zip"
+SOURCE_INPUT_DIR="$WORKSPACE_DIR/260508_Musashino_採用医薬品"
+SOURCE_REFERENCE_DIR="$WORKSPACE_DIR/旧採用医薬品リスト"
+RELEASE_NOTES_TEMPLATE="$PROJECT_DIR/docs/templates/release-assets/RELEASE_NOTES_TEMPLATE.md"
 
 rm -rf "$RELEASE_DIR" "$PYI_ROOT"
 mkdir -p "$RELEASE_DIR" "$DOCS_DIR" "$PYI_ROOT"
@@ -46,10 +50,10 @@ python3 -m PyInstaller \
 cp -R "$PYI_DIST/$APP_NAME.app" "$APP_DIR"
 codesign --force --deep --sign - "$APP_DIR" >/dev/null 2>&1 || true
 cp -R "$PROJECT_DIR/config" "$RELEASE_DIR/"
-cp -R "$PROJECT_DIR/260508_Musashino_採用医薬品" "$RELEASE_DIR/"
-cp -R "$PROJECT_DIR/旧採用医薬品リスト" "$RELEASE_DIR/"
+cp -R "$SOURCE_INPUT_DIR" "$RELEASE_DIR/"
+cp -R "$SOURCE_REFERENCE_DIR" "$RELEASE_DIR/"
 cp "$PROJECT_DIR/README.md" "$RELEASE_DIR/"
-cp "$PROJECT_DIR/RELEASE_NOTES_TEMPLATE.md" "$RELEASE_DIR/"
+cp "$RELEASE_NOTES_TEMPLATE" "$RELEASE_DIR/RELEASE_NOTES_TEMPLATE.md"
 cp "$PROJECT_DIR/docs/requirements-spec.html" "$DOCS_DIR/"
 cp "$PROJECT_DIR/docs/macos-distribution-guide.html" "$DOCS_DIR/"
 

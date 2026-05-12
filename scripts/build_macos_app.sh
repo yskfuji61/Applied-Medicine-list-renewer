@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+WORKSPACE_DIR=$(cd "$PROJECT_DIR/.." && pwd)
 APP_NAME="薬剤リスト変換アプリ"
 RELEASE_NAME="macos-release"
 DIST_DIR="$PROJECT_DIR/dist"
@@ -17,6 +18,9 @@ ICON_SOURCE="$PROJECT_DIR/assets/macos/app-icon.svg"
 ICON_PNG="$TMP_DIR/app-icon.png"
 ICONSET_DIR="$TMP_DIR/AppIcon.iconset"
 ZIP_PATH="$DIST_DIR/${APP_NAME}-macos.zip"
+SOURCE_INPUT_DIR="$WORKSPACE_DIR/260508_Musashino_採用医薬品"
+SOURCE_REFERENCE_DIR="$WORKSPACE_DIR/旧採用医薬品リスト"
+RELEASE_NOTES_TEMPLATE="$PROJECT_DIR/docs/templates/release-assets/RELEASE_NOTES_TEMPLATE.md"
 
 rm -rf "$RELEASE_DIR" "$TMP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$RUNTIME_DIR" "$TMP_DIR" "$RELEASE_DIR/docs"
@@ -30,11 +34,11 @@ fi
 if [[ -f "$PROJECT_DIR/README.md" ]]; then
   cp "$PROJECT_DIR/README.md" "$RELEASE_DIR/"
 fi
-if [[ -f "$PROJECT_DIR/RELEASE_NOTES_TEMPLATE.md" ]]; then
-  cp "$PROJECT_DIR/RELEASE_NOTES_TEMPLATE.md" "$RELEASE_DIR/"
+if [[ -f "$RELEASE_NOTES_TEMPLATE" ]]; then
+  cp "$RELEASE_NOTES_TEMPLATE" "$RELEASE_DIR/RELEASE_NOTES_TEMPLATE.md"
 fi
-cp -R "$PROJECT_DIR/260508_Musashino_採用医薬品" "$RELEASE_DIR/"
-cp -R "$PROJECT_DIR/旧採用医薬品リスト" "$RELEASE_DIR/"
+cp -R "$SOURCE_INPUT_DIR" "$RELEASE_DIR/"
+cp -R "$SOURCE_REFERENCE_DIR" "$RELEASE_DIR/"
 
 RUNTIME_CONFIG_PATH="$RUNTIME_DIR/config/defaults.json"
 RUNTIME_CONFIG_PATH="$RUNTIME_CONFIG_PATH" python3 - <<'PY'
