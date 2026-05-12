@@ -54,6 +54,48 @@ PYTHONPATH=src python3 -m pharmalist.cli publish-report \
 
 build script は親ディレクトリにある `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` を自動で取り込みます。
 
+## Docker 実行
+
+Docker 版は macOS の `.app` を置き換えるものではなく、既存 CLI をコンテナとして実行するための構成です。
+
+### イメージを build する
+
+```bash
+docker build -t pharmalist:local .
+```
+
+### `docker run` で実行する
+
+```bash
+docker run --rm \
+  -v "$PWD/../260508_Musashino_採用医薬品/references:/data/input:ro" \
+  -v "$PWD/../旧採用医薬品リスト:/data/reference:ro" \
+  -v "$PWD/../audit-reports:/data/audit" \
+  pharmalist:local \
+  publish-report /data/input /data/reference --name docker-run
+```
+
+container 内では次の固定 mount point を使います。
+
+- 入力: `/data/input`
+- 参照: `/data/reference`
+- 監査レポート出力: `/data/audit`
+- config: `/app/config/docker-defaults.json`
+
+### Compose で実行する
+
+この repo には sibling workspace 前提の `compose.yaml` を含めています。
+
+```bash
+docker compose run --rm pharmalist
+```
+
+既定では `publish-report /data/input /data/reference --name docker-run` を実行します。別コマンドに切り替える場合は次のように override します。
+
+```bash
+docker compose run --rm pharmalist profile /data/input
+```
+
 ### 署名と公証
 
 ```bash
@@ -105,5 +147,6 @@ export KEYCHAIN_PASSWORD="your-login-keychain-password"
 
 - 変換ロジックは旧採用医薬品リストとの完全一致を目標に調整済みです。
 - スタンドアロン版は Python を同梱します。
+- Docker 版は CLI 実行専用です。macOS の `.app` ランチャーや Finder 連携は含みません。
 - 開発 repo は `Applied-Medicine-list-renewer`、実データと監査レポートは親ディレクトリ側に分離されています。
 - 社外配布前には Developer ID 署名と notarization を行ってください。

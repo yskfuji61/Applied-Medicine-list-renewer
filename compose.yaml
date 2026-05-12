@@ -1,0 +1,18 @@
+services:
+  pharmalist:
+    build:
+      context: .
+    image: pharmalist:local
+    environment:
+      PHARMALIST_AUDIT_ROOT: /data/audit
+      PHARMALIST_CONFIG: /app/config/docker-defaults.json
+    volumes:
+      - ../260508_Musashino_採用医薬品/references:/data/input:ro
+      - ../旧採用医薬品リスト:/data/reference:ro
+      - ../audit-reports:/data/audit
+    command:
+      - publish-report
+      - /data/input
+      - /data/reference
+      - --name
+      - docker-run
