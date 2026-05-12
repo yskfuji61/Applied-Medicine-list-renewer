@@ -50,15 +50,15 @@ python3 -m PyInstaller \
 cp -R "$PYI_DIST/$APP_NAME.app" "$APP_DIR"
 codesign --force --deep --sign - "$APP_DIR" >/dev/null 2>&1 || true
 cp -R "$PROJECT_DIR/config" "$RELEASE_DIR/"
-cp -R "$SOURCE_INPUT_DIR" "$RELEASE_DIR/"
-cp -R "$SOURCE_REFERENCE_DIR" "$RELEASE_DIR/"
 cp "$PROJECT_DIR/README.md" "$RELEASE_DIR/"
 cp "$RELEASE_NOTES_TEMPLATE" "$RELEASE_DIR/RELEASE_NOTES_TEMPLATE.md"
 cp "$PROJECT_DIR/docs/requirements-spec.html" "$DOCS_DIR/"
 cp "$PROJECT_DIR/docs/macos-distribution-guide.html" "$DOCS_DIR/"
 
+find "$RELEASE_DIR" \( -name '.DS_Store' -o -name '._*' \) -delete
+
 rm -f "$ZIP_PATH"
-ditto -c -k --sequesterRsrc --keepParent "$RELEASE_DIR" "$ZIP_PATH"
+(cd "$DIST_DIR" && COPYFILE_DISABLE=1 zip -X -r -y "$ZIP_PATH" "$(basename "$RELEASE_DIR")" >/dev/null)
 
 echo "Standalone app bundle: $APP_DIR"
 echo "Standalone release directory: $RELEASE_DIR"

@@ -154,7 +154,7 @@
         <div class="card">
           <h3>配布フォルダ</h3>
           <p><code>dist/macos-standalone-release</code></p>
-          <p>app 本体、config、docs、sibling workspace から取り込んだ入力データ、参照データ、README、リリースノート雛形をまとめた実行用フォルダ。</p>
+          <p>app 本体、config、docs、README、リリースノート雛形をまとめた実行用フォルダ。実データは同梱しない。</p>
         </div>
         <div class="card">
           <h3>配布 ZIP</h3>
@@ -172,8 +172,8 @@
       <pre>./scripts/build_macos_standalone.sh</pre>
       <ol start="2">
         <li>完了後に <code>dist/macos-standalone-release</code> と <code>dist/薬剤リスト変換アプリ-standalone-macos.zip</code> を確認する。</li>
-        <li>build 前に親ディレクトリ側の <code>260508_Musashino_採用医薬品</code> と <code>旧採用医薬品リスト</code> が存在することを確認する。</li>
-        <li>app 実行時は配布フォルダ内の <code>docs/audit-reports/latest/diff-report.html</code> が自動で開く。</li>
+        <li>app 実行時に、配布フォルダの上位階層のどこかに <code>260508_Musashino_採用医薬品</code> と <code>旧採用医薬品リスト</code> が存在することを確認する。</li>
+        <li>app 実行時は sibling workspace 側の <code>audit-reports/latest/diff-report.html</code> が自動で開く。</li>
       </ol>
     </section>
 
@@ -182,10 +182,10 @@
       <table>
         <tr><th>OS</th><td>macOS 12 以上を想定</td></tr>
         <tr><th>Python</th><td>不要。PyInstaller で同梱済み。</td></tr>
-        <tr><th>入力</th><td>build 時に親ディレクトリ側の <code>260508_Musashino_採用医薬品/references</code> を配布フォルダへ同梱。</td></tr>
-        <tr><th>参照</th><td>build 時に親ディレクトリ側の <code>旧採用医薬品リスト</code> を配布フォルダへ同梱。</td></tr>
+        <tr><th>入力</th><td>配布物には同梱しない。実行時に上位階層から <code>260508_Musashino_採用医薬品/references</code> を探索する。</td></tr>
+        <tr><th>参照</th><td>配布物には同梱しない。実行時に上位階層から <code>旧採用医薬品リスト</code> を探索する。</td></tr>
         <tr><th>設定</th><td><code>config/defaults.json</code> を配布フォルダに同梱し、app から参照。</td></tr>
-        <tr><th>レポート</th><td>配布フォルダ内の <code>docs/audit-reports/latest</code> に出力される。</td></tr>
+        <tr><th>レポート</th><td>sibling workspace 側の <code>audit-reports/latest</code> に出力される。</td></tr>
       </table>
       <p class="warn">社外公開前には Developer ID 署名と notarization を必須にしてください。未署名配布では Gatekeeper 警告が強く出ます。</p>
     </section>
@@ -206,7 +206,7 @@
       <h2>公開前に必須の作業</h2>
       <ol>
         <li>個人名、ローカル絶対パス、社内限定ファイル名がレポートや docs に残っていないか確認する。</li>
-        <li>入力 CSV や旧採用リストに第三者提供不可の情報が含まれていないか確認する。</li>
+        <li>配布 zip に入力 CSV や旧採用リストが含まれていないことを確認する。</li>
         <li>配布物の README を追加し、前提 OS、署名状態、既知制約、親ディレクトリ側の元データ配置を明記する。</li>
         <li>リリースごとの内容は <code>RELEASE_NOTES_TEMPLATE.md</code> から起票して確定版を残す。</li>
         <li>アプリ名、バージョン、ビルド日、変更履歴を固定する。</li>
@@ -229,7 +229,7 @@ export APPLE_NOTARY_PROFILE="your-notary-profile"
 
     <section>
       <h2>GitHub Actions 公開パイプライン</h2>
-      <p><code>.github/workflows/macos-standalone-release.yml</code> を追加済みです。workflow_dispatch でテスト、standalone build、証明書 import、署名、公証、artifact upload まで流せます。CI 上では sibling workspace がないため、公開 pipeline とローカル個人配布運用は完全には同一ではありません。</p>
+      <p><code>.github/workflows/macos-standalone-release.yml</code> を追加済みです。workflow_dispatch でテスト、standalone build、証明書 import、署名、公証、artifact upload まで流せます。配布物には実データを同梱しません。</p>
       <table>
         <tr><th>必須 secrets</th><td><code>MACOS_CERTIFICATE_BASE64</code>, <code>MACOS_CERTIFICATE_PASSWORD</code>, <code>KEYCHAIN_PASSWORD</code>, <code>APPLE_SIGN_IDENTITY</code>, <code>APPLE_ID</code>, <code>APPLE_APP_SPECIFIC_PASSWORD</code>, <code>APPLE_TEAM_ID</code></td></tr>
         <tr><th>notary profile</th><td>workflow 内で <code>ci-notary</code> として一時 keychain に保存</td></tr>

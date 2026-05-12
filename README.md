@@ -1,6 +1,6 @@
 # 薬剤リスト変換アプリ
 
-武蔵野向けの新 CSV 群を、旧採用医薬品リスト互換の 5 ビューへ deterministic に変換し、差分レポートまで生成するアプリです。macOS standalone、Windows standalone、Docker CLI 実行をサポートします。
+武蔵野向けの新 CSV 群を、旧採用医薬品リスト互換の 5 ビューへ deterministic に変換し、差分レポートまで生成するアプリです。macOS standalone、Windows standalone、Docker CLI 実行をサポートします。配布物には実データを同梱しません。
 
 ## 現在の構成
 
@@ -55,7 +55,7 @@ PYTHONPATH=src python3 -m pharmalist.cli publish-report \
 ./scripts/build_macos_standalone.sh
 ```
 
-build script は親ディレクトリにある `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` を自動で取り込みます。
+build script は実データを配布物に含めません。生成された release フォルダや `.app` は、親階層のどこかに `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` がある sibling workspace で使ってください。
 
 ### Windows スタンドアロン版ビルド
 
@@ -63,7 +63,7 @@ build script は親ディレクトリにある `260508_Musashino_採用医薬品
 .\scripts\build_windows_standalone.ps1
 ```
 
-Windows 版も sibling workspace 構成を前提にし、親ディレクトリ側の `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` を release に取り込みます。
+Windows 版も sibling workspace 構成を前提にし、実データは release に同梱しません。展開後のフォルダを、`260508_Musashino_採用医薬品` と `旧採用医薬品リスト` が見える階層の下に置いて使います。
 
 ## Docker 実行
 
@@ -103,6 +103,8 @@ container 内では次の固定 mount point を使います。
 - 参照: `/data/reference`
 - 監査レポート出力: `/data/audit`
 - config: `/app/config/docker-defaults.json`
+
+Docker image 自体にも実データは含めません。入力と参照データは必ず host 側から volume mount します。
 
 ### Compose で実行する
 
@@ -178,5 +180,6 @@ export KEYCHAIN_PASSWORD="your-login-keychain-password"
 - スタンドアロン版は Python を同梱します。
 - Docker 版は CLI 実行専用です。macOS の `.app` ランチャーや Finder 連携は含みません。
 - Windows ネイティブ版は `.exe` 配布で、署名やインストーラ生成はまだ含みません。
+- macOS / Windows の配布 zip は実データ非同梱です。入力データと旧採用医薬品リストは sibling workspace に外置きしてください。
 - 開発 repo は `Applied-Medicine-list-renewer`、実データと監査レポートは親ディレクトリ側に分離されています。
 - 社外配布前には Developer ID 署名と notarization を行ってください。

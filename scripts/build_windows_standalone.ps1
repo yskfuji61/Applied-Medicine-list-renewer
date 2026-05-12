@@ -14,10 +14,7 @@ $BuiltAppDir = Join-Path $PyInstallerDist $AppName
 $FinalAppDir = Join-Path $ReleaseDir $AppName
 $DocsDir = Join-Path $FinalAppDir 'docs'
 $ZipPath = Join-Path $DistDir "$AppName-standalone-windows.zip"
-$SourceInputDir = Join-Path $WorkspaceDir '260508_Musashino_採用医薬品'
-$SourceReferenceDir = Join-Path $WorkspaceDir '旧採用医薬品リスト'
 $ReleaseNotesTemplate = Join-Path $ProjectDir 'docs\templates\release-assets\RELEASE_NOTES_TEMPLATE.md'
-$SkipDataBundle = $env:PHARMALIST_SKIP_DATA_BUNDLE -eq '1'
 
 Remove-Item -Recurse -Force $ReleaseDir, $PyInstallerRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $ReleaseDir, $PyInstallerRoot | Out-Null
@@ -36,19 +33,6 @@ python -m PyInstaller `
 
 Copy-Item -Recurse -Force $BuiltAppDir $FinalAppDir
 Copy-Item -Recurse -Force "$ProjectDir\config" "$FinalAppDir\config"
-if (-not $SkipDataBundle) {
-  if (-not (Test-Path $SourceInputDir)) {
-    throw "Input directory not found: $SourceInputDir"
-  }
-  if (-not (Test-Path $SourceReferenceDir)) {
-    throw "Reference directory not found: $SourceReferenceDir"
-  }
-  Copy-Item -Recurse -Force $SourceInputDir "$FinalAppDir\260508_Musashino_採用医薬品"
-  Copy-Item -Recurse -Force $SourceReferenceDir "$FinalAppDir\旧採用医薬品リスト"
-} else {
-  New-Item -ItemType Directory -Force -Path "$FinalAppDir\260508_Musashino_採用医薬品\references" | Out-Null
-  New-Item -ItemType Directory -Force -Path "$FinalAppDir\旧採用医薬品リスト" | Out-Null
-}
 Copy-Item -Force "$ProjectDir\README.md" "$FinalAppDir\README.md"
 Copy-Item -Force $ReleaseNotesTemplate "$FinalAppDir\RELEASE_NOTES_TEMPLATE.md"
 New-Item -ItemType Directory -Force -Path $DocsDir | Out-Null
@@ -62,6 +46,3 @@ Compress-Archive -Path $FinalAppDir -DestinationPath $ZipPath
 
 Write-Host "Windows standalone directory: $FinalAppDir"
 Write-Host "Windows standalone zip: $ZipPath"
-if ($SkipDataBundle) {
-  Write-Host "Data bundle skipped: placeholder input/reference directories were created for CI packaging."
-}

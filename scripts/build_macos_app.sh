@@ -37,8 +37,6 @@ fi
 if [[ -f "$RELEASE_NOTES_TEMPLATE" ]]; then
   cp "$RELEASE_NOTES_TEMPLATE" "$RELEASE_DIR/RELEASE_NOTES_TEMPLATE.md"
 fi
-cp -R "$SOURCE_INPUT_DIR" "$RELEASE_DIR/"
-cp -R "$SOURCE_REFERENCE_DIR" "$RELEASE_DIR/"
 
 RUNTIME_CONFIG_PATH="$RUNTIME_DIR/config/defaults.json"
 RUNTIME_CONFIG_PATH="$RUNTIME_CONFIG_PATH" python3 - <<'PY'
@@ -110,8 +108,10 @@ PLIST
 
 install -m 755 "$PROJECT_DIR/packaging/macos/app-launcher.sh" "$MACOS_DIR/pharmalist-launcher"
 
+find "$RELEASE_DIR" \( -name '.DS_Store' -o -name '._*' \) -delete
+
 rm -f "$ZIP_PATH"
-ditto -c -k --sequesterRsrc --keepParent "$RELEASE_DIR" "$ZIP_PATH"
+(cd "$DIST_DIR" && COPYFILE_DISABLE=1 zip -X -r -y "$ZIP_PATH" "$(basename "$RELEASE_DIR")" >/dev/null)
 
 echo "App bundle: $APP_DIR"
 echo "Release directory: $RELEASE_DIR"
