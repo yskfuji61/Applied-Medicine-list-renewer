@@ -36,6 +36,30 @@ from pharmalist.rules import determine_adoption_status, should_include_in_adopti
 from pharmalist.models import StandardDrugRecord
 
 
+def write_local_profile_config(config_path: Path, reference_dir: Path) -> Path:
+    defaults_path = Path(__file__).resolve().parents[1] / "config" / "defaults.json"
+    payload = json.loads(defaults_path.read_text(encoding="utf-8"))
+    worksheet_path = reference_dir / "■作業シート-表1.csv"
+    source_files = {
+        "worksheet": reference_dir / "■作業シート-表1.csv",
+        "generic": reference_dir / "一般名順-表1.csv",
+        "product": reference_dir / "製品名順-表1.csv",
+        "pharmacological": reference_dir / "薬効順-表1.csv",
+        "pharmacological_code": reference_dir / "薬効コード-表1.csv",
+    }
+
+    payload["masters"]["pharmacological_code"] = str(source_files["pharmacological_code"])
+    payload["pharmacological_fill"]["supplement_sources"] = [str(worksheet_path)]
+    payload["legacy_view_scope"]["reference_sources"] = [str(worksheet_path)]
+    payload["legacy_view_overrides"]["reference_sources"] = [str(worksheet_path)]
+    payload["legacy_view_order"]["source_files"] = {
+        view_name: str(path) for view_name, path in source_files.items()
+    }
+
+    config_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return config_path
+
+
 class ProfileTests(unittest.TestCase):
     def test_load_config_resolves_default_master_path(self) -> None:
         config = load_config()
@@ -780,6 +804,7 @@ class ProfileTests(unittest.TestCase):
             reference_dir = root / "reference"
             output_dir = root / "generated"
             json_path = root / "report" / "diff.json"
+            config_path = root / "config.json"
             reference_dir.mkdir()
 
             source.write_text(
@@ -805,8 +830,15 @@ class ProfileTests(unittest.TestCase):
                 "大項目,中項目,コード,,名称\n,,1000 ,,薬効A\n",
                 encoding="utf-8",
             )
+            write_local_profile_config(config_path, reference_dir)
 
-            render_compare_views(source, reference_dir, output_dir, json_output_path=json_path)
+            render_compare_views(
+                source,
+                reference_dir,
+                output_dir,
+                config_path=config_path,
+                json_output_path=json_path,
+            )
 
             payload = json.loads(json_path.read_text(encoding="utf-8"))
             self.assertIn("views", payload)
@@ -821,6 +853,7 @@ class ProfileTests(unittest.TestCase):
             reference_dir = root / "reference"
             output_dir = root / "generated"
             html_path = root / "report" / "diff.html"
+            config_path = root / "config.json"
             reference_dir.mkdir()
 
             source.write_text(
@@ -846,8 +879,15 @@ class ProfileTests(unittest.TestCase):
                 "大項目,中項目,コード,,名称\n,,1000 ,,薬効A\n",
                 encoding="utf-8",
             )
+            write_local_profile_config(config_path, reference_dir)
 
-            render_compare_views(source, reference_dir, output_dir, html_output_path=html_path)
+            render_compare_views(
+                source,
+                reference_dir,
+                output_dir,
+                config_path=config_path,
+                html_output_path=html_path,
+            )
 
             html_text = html_path.read_text(encoding="utf-8")
             self.assertIn("<html", html_text)
@@ -863,6 +903,7 @@ class ProfileTests(unittest.TestCase):
             source = root / "■作業シート-表1.csv"
             reference_dir = root / "reference"
             docs_dir = root / "docs"
+            config_path = root / "config.json"
             reference_dir.mkdir()
             docs_dir.mkdir()
 
@@ -889,6 +930,7 @@ class ProfileTests(unittest.TestCase):
                 "大項目,中項目,コード,,名称\n,,1000 ,,薬効A\n",
                 encoding="utf-8",
             )
+            write_local_profile_config(config_path, reference_dir)
 
             original_cwd = Path.cwd()
             try:
@@ -899,7 +941,7 @@ class ProfileTests(unittest.TestCase):
                     source,
                     reference_dir,
                     "latest",
-                    config_path=(Path(__file__).resolve().parents[1] / "config" / "defaults.json"),
+                    config_path=config_path,
                 )
             finally:
                 os.chdir(original_cwd)
