@@ -28,6 +28,58 @@ jobs:
         shell: pwsh
         run: .\scripts\build_windows_standalone.ps1
 
+      - name: Audit standalone zip contents
+        shell: pwsh
+        run: |
+          $zipPath = 'dist/薬剤リスト変換アプリ-standalone-windows.zip'
+          $auditDir = 'dist/windows-standalone-audit'
+          $extractDir = Join-Path $auditDir 'extracted'
+          $listingPath = Join-Path $auditDir 'zip-entries.txt'
+          $summaryPath = Join-Path $auditDir 'audit-summary.txt'
+          $forbiddenPattern = '__MACOSX|(^|[\\/])\._|(^|[\\/])\.DS_Store$|260508_Musashino_採用医薬品|旧採用医薬品リスト'
+
+          Remove-Item -Recurse -Force $auditDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $auditDir | Out-Null
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zipPath))
+          try {
+            $entries = $archive.Entries | ForEach-Object { $_.FullName }
+            $entries | Set-Content -Encoding utf8 $listingPath
+            if ($entries | Where-Object { $_ -match $forbiddenPattern }) {
+              throw 'Standalone zip contains forbidden bundled data or metadata entries.'
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+          Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
+
+          $appRoot = Join-Path $extractDir '薬剤リスト変換アプリ'
+          $exePath = Join-Path $appRoot '薬剤リスト変換アプリ.exe'
+          if (-not (Test-Path $appRoot -PathType Container)) {
+            throw 'Expanded zip did not reconstruct the expected application directory.'
+          }
+          if (-not (Test-Path $exePath -PathType Leaf)) {
+            throw 'Expanded zip did not reconstruct the expected standalone executable.'
+          }
+
+          @(
+            "zip=$zipPath"
+            "entries=$($entries.Count)"
+            "app_root=$appRoot"
+            "exe=$exePath"
+            'forbidden_entries=none'
+            'expanded_executable=yes'
+          ) | Set-Content -Encoding utf8 $summaryPath
+
+      - name: Upload standalone audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-standalone-audit
+          path: dist/windows-standalone-audit
+
       - name: Upload standalone release folder
         uses: actions/upload-artifact@v4
         with:
