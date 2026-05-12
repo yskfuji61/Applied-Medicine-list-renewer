@@ -1,6 +1,6 @@
 # 薬剤リスト変換アプリ
 
-武蔵野向けの新 CSV 群を、旧採用医薬品リスト互換の 5 ビューへ deterministic に変換し、差分レポートまで生成する macOS 向けアプリです。
+武蔵野向けの新 CSV 群を、旧採用医薬品リスト互換の 5 ビューへ deterministic に変換し、差分レポートまで生成するアプリです。macOS standalone、Windows standalone、Docker CLI 実行をサポートします。
 
 ## 現在の構成
 
@@ -21,7 +21,10 @@
 
 - `dist/macos-standalone-release/薬剤リスト変換アプリ.app`
 - `dist/薬剤リスト変換アプリ-standalone-macos.zip`
+- `dist/windows-standalone-release/薬剤リスト変換アプリ/薬剤リスト変換アプリ.exe`
+- `dist/薬剤リスト変換アプリ-standalone-windows.zip`
 - `docs/macos-distribution-guide.html`
+- `docs/windows-distribution-guide.md`
 
 ## ローカル実行
 
@@ -54,6 +57,14 @@ PYTHONPATH=src python3 -m pharmalist.cli publish-report \
 
 build script は親ディレクトリにある `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` を自動で取り込みます。
 
+### Windows スタンドアロン版ビルド
+
+```powershell
+.\scripts\build_windows_standalone.ps1
+```
+
+Windows 版も sibling workspace 構成を前提にし、親ディレクトリ側の `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` を release に取り込みます。
+
 ## Docker 実行
 
 Docker 版は macOS の `.app` を置き換えるものではなく、既存 CLI をコンテナとして実行するための構成です。
@@ -75,6 +86,17 @@ docker run --rm \
   publish-report /data/input /data/reference --name docker-run
 ```
 
+PowerShell では次の形で実行できます。
+
+```powershell
+docker run --rm `
+  -v "${PWD}\..\260508_Musashino_採用医薬品\references:/data/input:ro" `
+  -v "${PWD}\..\旧採用医薬品リスト:/data/reference:ro" `
+  -v "${PWD}\..\audit-reports:/data/audit" `
+  pharmalist:local `
+  publish-report /data/input /data/reference --name docker-run
+```
+
 container 内では次の固定 mount point を使います。
 
 - 入力: `/data/input`
@@ -87,6 +109,12 @@ container 内では次の固定 mount point を使います。
 この repo には sibling workspace 前提の `compose.yaml` を含めています。
 
 ```bash
+docker compose run --rm pharmalist
+```
+
+PowerShell でも同じコマンドで実行できます。
+
+```powershell
 docker compose run --rm pharmalist
 ```
 
@@ -107,6 +135,7 @@ export APPLE_NOTARY_PROFILE="your-notary-profile"
 ## GitHub Actions
 
 - Workflow: `.github/workflows/macos-standalone-release.yml`
+- Workflow: `.github/workflows/windows-standalone-release.yml`
 - 必須 secrets:
   - `MACOS_CERTIFICATE_BASE64`
   - `MACOS_CERTIFICATE_PASSWORD`
@@ -148,5 +177,6 @@ export KEYCHAIN_PASSWORD="your-login-keychain-password"
 - 変換ロジックは旧採用医薬品リストとの完全一致を目標に調整済みです。
 - スタンドアロン版は Python を同梱します。
 - Docker 版は CLI 実行専用です。macOS の `.app` ランチャーや Finder 連携は含みません。
+- Windows ネイティブ版は `.exe` 配布で、署名やインストーラ生成はまだ含みません。
 - 開発 repo は `Applied-Medicine-list-renewer`、実データと監査レポートは親ディレクトリ側に分離されています。
 - 社外配布前には Developer ID 署名と notarization を行ってください。
