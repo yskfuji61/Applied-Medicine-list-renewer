@@ -219,11 +219,23 @@
           "generic_name": "ﾌﾞﾛﾑﾍｷｼﾝ塩酸塩注射液",
           "usage_purchase_flag": ""
         }
+      },
+      {
+        "match": { "tensu_code": "171052" },
+        "override": {
+          "tensu_code": "170960",
+          "yj_code": "631341DA1025",
+          "pharmacological_code": "6313",
+          "pharmacological_name": "ウイルスワクチン類",
+          "display_name": "ｺﾐﾅﾃｨRTU筋注（ｺﾛﾅﾜｸﾁﾝ・P）0.3mL",
+          "generic_name": "乾燥組織培養不活化A型肝炎ﾜｸﾁﾝ",
+          "usage_purchase_flag": ""
+        }
       }
     ],
     "explicit_duplicates": [
-      { "match": { "tensu_code": "170960" } },
-      { "match": { "tensu_code": "170548" } }
+      { "match": { "tensu_code": "160187" } },
+      { "match": { "tensu_code": "170163" } }
     ]
   }
 }
