@@ -18,6 +18,7 @@ ICON_PNG="$PYI_ROOT/app-icon.png"
 ICONSET_DIR="$PYI_ROOT/AppIcon.iconset"
 ICNS_PATH="$PYI_ROOT/AppIcon.icns"
 ZIP_PATH="$DIST_DIR/${APP_NAME}-standalone-macos.zip"
+SIGN_AND_NOTARIZE=${SIGN_AND_NOTARIZE:-0}
 SOURCE_INPUT_DIR="$WORKSPACE_DIR/260508_Musashino_採用医薬品"
 SOURCE_REFERENCE_DIR="$WORKSPACE_DIR/旧採用医薬品リスト"
 RELEASE_NOTES_TEMPLATE="$PROJECT_DIR/docs/templates/release-assets/RELEASE_NOTES_TEMPLATE.md"
@@ -48,7 +49,6 @@ python3 -m PyInstaller \
   "$PROJECT_DIR/packaging/macos/standalone_launcher.py"
 
 cp -R "$PYI_DIST/$APP_NAME.app" "$APP_DIR"
-codesign --force --deep --sign - "$APP_DIR" >/dev/null 2>&1 || true
 cp -R "$PROJECT_DIR/config" "$RELEASE_DIR/"
 cp "$PROJECT_DIR/README.md" "$RELEASE_DIR/"
 cp "$RELEASE_NOTES_TEMPLATE" "$RELEASE_DIR/RELEASE_NOTES_TEMPLATE.md"
@@ -59,6 +59,13 @@ find "$RELEASE_DIR" \( -name '.DS_Store' -o -name '._*' \) -delete
 
 rm -f "$ZIP_PATH"
 (cd "$DIST_DIR" && COPYFILE_DISABLE=1 zip -X -r -y "$ZIP_PATH" "$(basename "$RELEASE_DIR")" >/dev/null)
+
+if [[ "$SIGN_AND_NOTARIZE" == "1" ]]; then
+  APP_DIR="$APP_DIR" \
+  RELEASE_DIR="$RELEASE_DIR" \
+  ZIP_PATH="$ZIP_PATH" \
+  "$PROJECT_DIR/scripts/sign_and_notarize_macos.sh"
+fi
 
 echo "Standalone app bundle: $APP_DIR"
 echo "Standalone release directory: $RELEASE_DIR"

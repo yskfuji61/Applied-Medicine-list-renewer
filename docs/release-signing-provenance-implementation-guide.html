@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>署名・公証・Provenance 実装手順書 | 薬剤リスト変換アプリ</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: rgba(255, 251, 245, 0.94);
+      --ink: #1f2937;
+      --muted: #586272;
+      --line: rgba(30, 41, 59, 0.12);
+      --accent: #0f5f57;
+      --accent-soft: #d9eee9;
+      --warn: #9a3412;
+      --warn-soft: #fde7dc;
+      --danger: #8a1c1c;
+      --danger-soft: #f7dada;
+      --good: #166534;
+      --good-soft: #dcf4e2;
+      --code-bg: #15212b;
+      --code-ink: #edf7ff;
+      --shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      line-height: 1.72;
+      background:
+        radial-gradient(circle at top right, rgba(15, 95, 87, 0.14), transparent 30%),
+        radial-gradient(circle at left bottom, rgba(154, 52, 18, 0.10), transparent 34%),
+        var(--bg);
+    }
+    main {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+    .hero, section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.25;
+    }
+    h1 { font-size: clamp(2rem, 4vw, 3.3rem); }
+    h2 { font-size: 1.58rem; }
+    h3 { font-size: 1.05rem; }
+    p { margin: 0 0 14px; }
+    .lead {
+      color: var(--muted);
+      font-size: 1.04rem;
+      max-width: 920px;
+    }
+    .pill {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      background: rgba(255,255,255,0.68);
+    }
+    .metric {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .subtle { color: var(--muted); font-size: 0.95rem; }
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .status-good { background: var(--good-soft); color: var(--good); }
+    .status-warn { background: #fce8cf; color: var(--warn); }
+    .status-danger { background: var(--danger-soft); color: var(--danger); }
+    .phase {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 20px;
+      margin-top: 18px;
+      background: rgba(255,255,255,0.62);
+    }
+    .step-no {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .callout, .warn, .danger {
+      border-left: 4px solid var(--accent);
+      border-radius: 0 14px 14px 0;
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+    .callout {
+      background: var(--accent-soft);
+      border-left-color: var(--accent);
+    }
+    .warn {
+      background: var(--warn-soft);
+      border-left-color: var(--warn);
+    }
+    .danger {
+      background: var(--danger-soft);
+      border-left-color: var(--danger);
+    }
+    pre {
+      margin: 12px 0 0;
+      padding: 16px;
+      overflow: auto;
+      border-radius: 18px;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      font-family: "SFMono-Regular", Menlo, monospace;
+      font-size: 0.91rem;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+      background: rgba(15, 95, 87, 0.08);
+      padding: 0.12em 0.35em;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { width: 22%; }
+    ul, ol { margin: 0; padding-left: 1.2rem; }
+    li + li { margin-top: 8px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+    }
+    @media (max-width: 720px) {
+      main { padding: 20px 14px 48px; }
+      .hero, section { padding: 20px; border-radius: 20px; }
+      table, tbody, tr, th, td { display: block; width: 100%; }
+      th { border-bottom: none; padding-bottom: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="pill">Signing / Notarization / Provenance</div>
+      <h1>署名・公証・Provenance 実装手順書</h1>
+      <p class="lead">この文書は、薬剤リスト変換アプリの個人配布運用を「未署名 ZIP の配布」から「署名済みバイナリ + 公証済み macOS 配布物 + 検証可能な checksum / provenance asset を持つ release」へ引き上げるための実装レベルの手順書です。単なる概念説明ではなく、どの script と workflow に何を入れ、どの secret 名を使い、どの順番で build / sign / verify / upload するかまでを固定します。</p>
+      <div class="grid">
+        <div class="card">
+          <div class="metric">3</div>
+          <div>対象配布物</div>
+          <div class="subtle">macOS wrapper / macOS standalone / Windows standalone</div>
+        </div>
+        <div class="card">
+          <div class="metric">2</div>
+          <div>真正性レイヤ</div>
+          <div class="subtle">OS 署名 + checksum / provenance asset</div>
+        </div>
+        <div class="card">
+          <div class="metric">1</div>
+          <div>固定 release 手順</div>
+          <div class="subtle">build → sign → verify → checksum → publish</div>
+        </div>
+        <div class="card">
+          <div class="metric">0</div>
+          <div>許容しない状態</div>
+          <div class="subtle">未署名 app / notes のみの SHA256 / 手作業の場当たり upload</div>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>完了条件</h2>
+      <table>
+        <tr><th>macOS</th><td>Developer ID Application で署名され、<code>notarytool</code> で notarization が完了し、staple 済みの .app から ZIP を再生成する。</td></tr>
+        <tr><th>Windows</th><td>PyInstaller が出力した <code>.exe</code> と同梱 PE ファイルを Authenticode 署名し、<code>Get-AuthenticodeSignature</code> で有効署名を確認してから ZIP 化する。</td></tr>
+        <tr><th>Release Integrity</th><td><code>SHA256SUMS.txt</code> とその署名ファイル、または provenance artifact を release asset として添付する。release notes の本文だけに checksum を置かない。</td></tr>
+        <tr><th>Workflow</th><td>CI から生成された配布物は、同じ job 内で署名・検証・checksum 生成・asset upload まで完了する。</td></tr>
+        <tr><th>運用</th><td>配布者以外が、OS 標準検証または公開鍵で改ざん有無を検証できる。</td></tr>
+      </table>
+      <div class="callout">この手順書の狙いは「見た目の release 品質」ではなく、「受け手が正当な配布者と改ざん有無を検証できること」です。</div>
+    </section>
+
+    <section>
+      <h2>実装方針</h2>
+      <div class="two-col">
+        <div class="card">
+          <div class="status status-good">macOS</div>
+          <h3>Developer ID + notarization を build pipeline に統合する</h3>
+          <p>現行 repo には <code>scripts/sign_and_notarize_macos.sh</code> と <code>.github/workflows/macos-standalone-release.yml</code> が既にあります。これを「build 後の任意手順」から「release build の正規工程」へ格上げし、ZIP の再生成方法も metadata 汚染しない形へ修正します。</p>
+        </div>
+        <div class="card">
+          <div class="status status-good">Windows</div>
+          <h3>AuthentiCode は build script 内で完結させる</h3>
+          <p>現行の <code>build_windows_standalone.ps1</code> は build と zip 化だけです。ここに署名処理と署名検証を直接組み込みます。推奨は CI では Azure Trusted Signing、ローカル release machine では PFX 証明書です。</p>
+        </div>
+      </div>
+      <div class="two-col" style="margin-top: 18px;">
+        <div class="card">
+          <div class="status status-good">Integrity</div>
+          <h3>release notes ではなく asset を増やす</h3>
+          <p>最低限追加する asset は <code>SHA256SUMS.txt</code> と、その署名ファイルです。ファイル名は ASCII を使います。GitHub Releases は日本語 asset 名を内部保存名で正規化するため、integrity 用の asset まで Unicode にしない方が運用事故が少ないです。</p>
+        </div>
+        <div class="card">
+          <div class="status status-warn">重要</div>
+          <h3>署名は最後に行う</h3>
+          <p>アイコン差し替え、README コピー、config 書き換え、ZIP 再生成のあとに署名するのではありません。ファイル内容が全て確定したあとで app / exe / dll を署名し、その後は ZIP 包装と checksum 生成だけに限定します。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Secret / 証明書インベントリ</h2>
+      <table>
+        <tr><th>macOS local</th><td><code>APPLE_CERT_P12_PATH</code>, <code>APPLE_CERT_P12_PASSWORD</code>, <code>APPLE_SIGN_IDENTITY</code>, <code>APPLE_ID</code>, <code>APPLE_TEAM_ID</code>, <code>APPLE_APP_SPECIFIC_PASSWORD</code>, <code>APPLE_NOTARY_PROFILE</code></td></tr>
+        <tr><th>macOS Actions</th><td><code>MACOS_CERTIFICATE_BASE64</code>, <code>MACOS_CERTIFICATE_PASSWORD</code>, <code>KEYCHAIN_PASSWORD</code>, <code>APPLE_SIGN_IDENTITY</code>, <code>APPLE_ID</code>, <code>APPLE_APP_SPECIFIC_PASSWORD</code>, <code>APPLE_TEAM_ID</code></td></tr>
+        <tr><th>Windows local</th><td><code>WINDOWS_CERT_PFX_PATH</code>, <code>WINDOWS_CERT_PFX_PASSWORD</code>, <code>WINDOWS_SIGN_SUBJECT</code>, <code>WINDOWS_TIMESTAMP_URL</code></td></tr>
+        <tr><th>Windows Actions 推奨</th><td>Azure Trusted Signing 用の tenant / client / account / profile 情報、または CI 用 PFX を Base64 化した <code>WINDOWS_CERTIFICATE_BASE64</code> と <code>WINDOWS_CERTIFICATE_PASSWORD</code></td></tr>
+        <tr><th>checksum signing</th><td><code>MINISIGN_SECRET_KEY</code> または GPG 秘密鍵。個人配布なら offline 検証が簡単な <code>minisign</code> を推奨。</td></tr>
+      </table>
+      <div class="warn">現行の GitHub Release は notes に SHA256 を記載していますが、それだけでは「改ざんされていない checksum 自体」を証明できません。checksum そのものに署名が必要です。</div>
+    </section>
+
+    <section>
+      <h2>Phase 1: macOS Developer ID 署名と notarization を build に組み込む</h2>
+
+      <div class="phase">
+        <div class="step-no">1</div>
+        <h3>現状の差分を理解する</h3>
+        <p>現行の <code>scripts/build_macos_standalone.sh</code> は build 後に <code>codesign --sign -</code> を打っていますが、これは ad-hoc 署名であり配布者証明には使えません。さらに <code>scripts/sign_and_notarize_macos.sh</code> は ZIP 再生成に <code>ditto --sequesterRsrc</code> を使っており、以前除去した macOS metadata を再混入させるリスクがあります。</p>
+        <div class="danger">この 2 点はそのまま運用に入れてはいけません。macOS 側は「Developer ID 署名に一本化」「notarization 後の ZIP 再生成は metadata 汚染しない方法に変更」が必須です。</div>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">2</div>
+        <h3>build script の責務を整理する</h3>
+        <p>次の 3 file を対象にします。</p>
+        <ol>
+          <li><code>scripts/build_macos_standalone.sh</code></li>
+          <li><code>scripts/build_macos_app.sh</code></li>
+          <li><code>scripts/sign_and_notarize_macos.sh</code></li>
+        </ol>
+        <p>責務分離は次で固定します。</p>
+        <table>
+          <tr><th>build script</th><td>unsigned だが内容確定済みの release directory と ZIP を作る。署名はしない。</td></tr>
+          <tr><th>sign script</th><td>app を署名し、検証し、ZIP を再生成し、notarization を通し、staple し、検証し、checksum を生成する。</td></tr>
+          <tr><th>workflow</th><td>build script と sign script を順に呼び、署名済み ZIP と checksum asset を upload する。</td></tr>
+        </table>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">3</div>
+        <h3>build_macos_standalone.sh / build_macos_app.sh の改修要件</h3>
+        <ol>
+          <li>ad-hoc 署名行を削除する。</li>
+          <li>ZIP 生成は現行どおり <code>zip -X -r -y</code> を維持する。</li>
+          <li>必要なら <code>SIGN_AND_NOTARIZE=1</code> 時だけ sign script を呼べるようにするが、責務は sign script 側に置く。</li>
+          <li>wrapper を今後も配るなら、wrapper と standalone の両方で同じ署名フローを使えるように <code>APP_DIR</code> / <code>RELEASE_DIR</code> / <code>ZIP_PATH</code> を外から受けられる構造にする。</li>
+        </ol>
+        <pre>export SIGN_AND_NOTARIZE=1
+export MACOS_RELEASE_KIND=standalone
+./scripts/build_macos_standalone.sh
+
+# build script の最後で呼ぶ場合のイメージ
+if [[ "${SIGN_AND_NOTARIZE:-0}" == "1" ]]; then
+  APP_DIR="$APP_DIR" \
+  RELEASE_DIR="$RELEASE_DIR" \
+  ZIP_PATH="$ZIP_PATH" \
+  ./scripts/sign_and_notarize_macos.sh
+fi</pre>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">4</div>
+        <h3>sign_and_notarize_macos.sh の改修要件</h3>
+        <p>現行 script は土台として使えますが、次を必須変更とします。</p>
+        <ol>
+          <li><code>APP_DIR</code>, <code>RELEASE_DIR</code>, <code>ZIP_PATH</code>, <code>SHA_PATH</code> を環境変数で上書き可能にする。</li>
+          <li><code>ditto --sequesterRsrc</code> を廃止し、staple 完了後に <code>zip -X -r -y</code> で release directory から再包装する。</li>
+          <li><code>codesign --verify</code> に加えて <code>spctl -a -vvv</code> を notarization 後にも必ず実行する。</li>
+          <li>ZIP と checksum のみを asset 化し、release notes 本文への依存をなくす。</li>
+        </ol>
+        <pre>#!/bin/zsh
+set -euo pipefail
+
+APP_DIR=${APP_DIR:-"$DIST_DIR/$RELEASE_NAME/薬剤リスト変換アプリ.app"}
+RELEASE_DIR=${RELEASE_DIR:-"$DIST_DIR/$RELEASE_NAME"}
+ZIP_PATH=${ZIP_PATH:-"$DIST_DIR/薬剤リスト変換アプリ-standalone-macos.zip"}
+SHA_PATH=${SHA_PATH:-"$DIST_DIR/SHA256SUMS.txt"}
+
+xattr -cr "$APP_DIR"
+codesign --force --deep --options runtime --timestamp --sign "$APPLE_SIGN_IDENTITY" "$APP_DIR"
+codesign --verify --deep --strict --verbose=2 "$APP_DIR"
+
+TMP_NOTARY_ZIP="$DIST_DIR/notary-upload.zip"
+rm -f "$TMP_NOTARY_ZIP"
+(cd "$DIST_DIR" && zip -X -r -y "$TMP_NOTARY_ZIP" "$(basename "$RELEASE_DIR")" >/dev/null)
+
+xcrun notarytool submit "$TMP_NOTARY_ZIP" --keychain-profile "$APPLE_NOTARY_PROFILE" --wait
+xcrun stapler staple "$APP_DIR"
+spctl -a -vvv "$APP_DIR"
+
+rm -f "$ZIP_PATH"
+(cd "$DIST_DIR" && zip -X -r -y "$ZIP_PATH" "$(basename "$RELEASE_DIR")" >/dev/null)</pre>
+        <div class="warn">notarization 用の一時 ZIP と最終配布 ZIP は分ける方が安全です。submit に使った ZIP をそのまま release asset に固定すると、後段で checksum を作り直したくなったときに運用がぶれます。</div>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">5</div>
+        <h3>macOS workflow の変更点</h3>
+        <ol>
+          <li><code>.github/workflows/macos-standalone-release.yml</code> の notarize path を既定動線にする。</li>
+          <li>署名済み ZIP と <code>SHA256SUMS.txt</code>, <code>SHA256SUMS.txt.minisig</code> を同時に upload する。</li>
+          <li>必要なら wrapper 用 job を別追加するが、最初は standalone のみを正規 release とする。</li>
+        </ol>
+        <pre>- name: Build standalone release
+  run: ./scripts/build_macos_standalone.sh
+
+- name: Sign and notarize
+  run: ./scripts/sign_and_notarize_macos.sh
+
+- name: Generate signed checksums
+  run: ./scripts/generate_signed_checksums.sh \
+    dist/薬剤リスト変換アプリ-standalone-macos.zip \
+    dist/薬剤リスト変換アプリ-standalone-windows.zip
+
+- name: Upload integrity assets
+  uses: actions/upload-artifact@v4
+  with:
+    name: release-integrity-assets
+    path: |
+      dist/SHA256SUMS.txt
+      dist/SHA256SUMS.txt.minisig
+      dist/release-manifest.json</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 2: Windows Authenticode 署名を build に組み込む</h2>
+
+      <div class="phase">
+        <div class="step-no">6</div>
+        <h3>Windows は build_windows_standalone.ps1 内に署名を入れる</h3>
+        <p>署名を workflow だけに置くと、ローカルで同じ配布物を再現できません。<code>scripts/build_windows_standalone.ps1</code> に署名ブロックを入れ、workflow からもローカル release machine からも同じ script を使う形にします。</p>
+        <table>
+          <tr><th>署名対象</th><td><code>.exe</code> だけでなく、bundle 配下の <code>.dll</code> と <code>.pyd</code> も対象にする。</td></tr>
+          <tr><th>タイミング</th><td>PyInstaller build 後、ZIP 化前。</td></tr>
+          <tr><th>検証</th><td><code>Get-AuthenticodeSignature</code> で <code>Status -eq Valid</code> を必須にする。</td></tr>
+        </table>
+        <pre>$SignEnabled = $env:WINDOWS_SIGN_ENABLED -eq '1'
+$TimestampUrl = $env:WINDOWS_TIMESTAMP_URL
+
+if ($SignEnabled) {
+  $targets = Get-ChildItem -Path $FinalAppDir -Recurse -File |
+    Where-Object { $_.Extension -in '.exe', '.dll', '.pyd' }
+
+  foreach ($target in $targets) {
+    & signtool sign /fd SHA256 /td SHA256 /tr $TimestampUrl \
+      /f $env:WINDOWS_CERT_PFX_PATH /p $env:WINDOWS_CERT_PFX_PASSWORD \
+      $target.FullName
+
+    $signature = Get-AuthenticodeSignature -FilePath $target.FullName
+    if ($signature.Status -ne 'Valid') {
+      throw "Authenticode verification failed: $($target.FullName) status=$($signature.Status)"
+    }
+  }
+}</pre>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">7</div>
+        <h3>CI は Azure Trusted Signing を第一候補にする</h3>
+        <p>PFX を CI に持ち込むより、GitHub Actions で Azure Trusted Signing を使う方が、秘密鍵の保護と失効運用の面でましです。個人配布でも Windows の SmartScreen 対策を継続するならこちらを推奨します。</p>
+        <table>
+          <tr><th>推奨</th><td>GitHub Actions では Trusted Signing action または signtool + Trusted Signing endpoint を使う。</td></tr>
+          <tr><th>fallback</th><td>ローカル release machine では PFX 証明書を使う。</td></tr>
+          <tr><th>避ける</th><td>未署名の Windows standalone ZIP を release に載せること。</td></tr>
+        </table>
+        <pre>- name: Sign Windows bundle
+  uses: azure/trusted-signing-action@v0
+  with:
+    azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+    endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+    trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+    certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE }}
+    files-folder: dist/windows-standalone-release/薬剤リスト変換アプリ</pre>
+        <div class="warn">PFX 方式を選ぶ場合でも、最終的な release asset 生成を CI に寄せるなら、証明書は repository secret ではなく organization secret か environment secret に置く方がよいです。</div>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">8</div>
+        <h3>Windows workflow の変更点</h3>
+        <ol>
+          <li><code>.github/workflows/windows-standalone-release.yml</code> の build step の前後に sign / verify を入れる。</li>
+          <li>署名後の ZIP に対して現行の forbidden entry 監査を維持する。</li>
+          <li>最後に checksum / signature asset も upload する。</li>
+        </ol>
+        <pre>- name: Build standalone release
+  shell: pwsh
+  env:
+    WINDOWS_SIGN_ENABLED: '1'
+    WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+    WINDOWS_CERT_PFX_PATH: ${{ runner.temp }}\release-signing.pfx
+    WINDOWS_CERT_PFX_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+  run: .\scripts\build_windows_standalone.ps1
+
+- name: Verify Authenticode status
+  shell: pwsh
+  run: |
+    Get-ChildItem dist/windows-standalone-release/薬剤リスト変換アプリ -Recurse -File |
+      Where-Object { $_.Extension -in '.exe', '.dll', '.pyd' } |
+      ForEach-Object {
+        $sig = Get-AuthenticodeSignature $_.FullName
+        if ($sig.Status -ne 'Valid') { throw "Invalid signature: $($_.FullName)" }
+      }</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 3: signed checksum file または provenance asset を release に添付する</h2>
+
+      <div class="phase">
+        <div class="step-no">9</div>
+        <h3>推奨構成</h3>
+        <table>
+          <tr><th>必須 asset</th><td><code>SHA256SUMS.txt</code>, <code>SHA256SUMS.txt.minisig</code></td></tr>
+          <tr><th>推奨 asset</th><td><code>release-manifest.json</code>。各配布物の SHA256、サイズ、build run id、commit SHA、OS、署名方式を入れる。</td></tr>
+          <tr><th>任意追加</th><td><code>release-provenance.intoto.jsonl</code> または GitHub Artifact Attestation。CI build provenance を強くしたい場合に追加。</td></tr>
+          <tr><th>命名</th><td>checksum / provenance asset は ASCII 名に統一する。GitHub Releases の Unicode asset name 正規化問題を避けるため。</td></tr>
+        </table>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">10</div>
+        <h3>checksum 生成と署名の標準手順</h3>
+        <p>個人配布では、受け手が追加ツールなしで ZIP を取得し、必要なら軽量に verify できる構成がよいです。ここでは <code>minisign</code> を標準とします。</p>
+        <pre>#!/bin/zsh
+set -euo pipefail
+
+DIST_DIR=${1:-dist}
+CHECKSUM_FILE="$DIST_DIR/SHA256SUMS.txt"
+
+shasum -a 256 \
+  "$DIST_DIR/薬剤リスト変換アプリ-macos.zip" \
+  "$DIST_DIR/薬剤リスト変換アプリ-standalone-macos.zip" \
+  "$DIST_DIR/薬剤リスト変換アプリ-standalone-windows.zip" \
+  > "$CHECKSUM_FILE"
+
+minisign -S \
+  -s "$MINISIGN_SECRET_KEY" \
+  -m "$CHECKSUM_FILE" \
+  -x "$DIST_DIR/SHA256SUMS.txt.minisig" \
+  -t "Applied-Medicine-list-renewer release checksums"</pre>
+        <p>受け手向けの検証手順は次です。</p>
+        <pre>minisign -Vm SHA256SUMS.txt -P '公開鍵文字列'
+shasum -a 256 -c SHA256SUMS.txt</pre>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">11</div>
+        <h3>release-manifest.json の標準項目</h3>
+        <pre>{
+  "release_tag": "v2026.05.13",
+  "commit": "60f5550...",
+  "generated_at": "2026-05-13T08:22:00+09:00",
+  "assets": [
+    {
+      "name": "薬剤リスト変換アプリ-standalone-macos.zip",
+      "sha256": "deb50a...",
+      "size": 9510080,
+      "platform": "macos",
+      "signing": "developer-id + notarized"
+    },
+    {
+      "name": "薬剤リスト変換アプリ-standalone-windows.zip",
+      "sha256": "24998a...",
+      "size": 6583944,
+      "platform": "windows",
+      "signing": "authenticode"
+    }
+  ]
+}</pre>
+        <div class="callout">release-manifest.json は「人間向けの notes」と「機械向けの検証入力」の間を埋める asset です。運用のぶれが減ります。</div>
+      </div>
+
+      <div class="phase">
+        <div class="step-no">12</div>
+        <h3>GitHub Release upload の標準形</h3>
+        <pre>gh release create "$TAG" \
+  dist/薬剤リスト変換アプリ-macos.zip \
+  dist/薬剤リスト変換アプリ-standalone-macos.zip \
+  dist/薬剤リスト変換アプリ-standalone-windows.zip \
+  dist/SHA256SUMS.txt \
+  dist/SHA256SUMS.txt.minisig \
+  dist/release-manifest.json \
+  --title "$TITLE" \
+  --notes-file dist/RELEASE_NOTES.md</pre>
+        <div class="warn">Release notes は説明に使い、検証用データは asset に寄せること。notes だけで integrity を成立させないこと。</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase 4: 検証ゲート</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="status status-good">Gate 1</div>
+          <h3>Build 完了</h3>
+          <p>3 配布物が生成され、実データ非同梱、不要 metadata 非同梱であること。</p>
+        </div>
+        <div class="card">
+          <div class="status status-good">Gate 2</div>
+          <h3>OS 署名検証</h3>
+          <p>macOS は <code>codesign --verify</code> と <code>spctl</code>、Windows は <code>Get-AuthenticodeSignature</code> が通ること。</p>
+        </div>
+        <div class="card">
+          <div class="status status-good">Gate 3</div>
+          <h3>Reconstruction</h3>
+          <p>ZIP 展開後に .app / .exe が再構成されること。既存の Windows audit step は継続利用する。</p>
+        </div>
+        <div class="card">
+          <div class="status status-good">Gate 4</div>
+          <h3>Integrity Assets</h3>
+          <p><code>SHA256SUMS.txt</code> と署名ファイルが release asset として添付され、検証コマンドが通ること。</p>
+        </div>
+      </div>
+      <pre># macOS
+codesign --verify --deep --strict --verbose=2 'dist/macos-standalone-release/薬剤リスト変換アプリ.app'
+spctl -a -vvv 'dist/macos-standalone-release/薬剤リスト変換アプリ.app'
+
+# Windows
+Get-AuthenticodeSignature 'dist\windows-standalone-release\薬剤リスト変換アプリ\薬剤リスト変換アプリ.exe'
+
+# checksum
+minisign -Vm dist/SHA256SUMS.txt -P '公開鍵文字列'
+shasum -a 256 -c dist/SHA256SUMS.txt</pre>
+    </section>
+
+    <section>
+      <h2>運用順序の固定版</h2>
+      <ol>
+        <li>テストを通す。</li>
+        <li>unsigned build を生成する。</li>
+        <li>macOS app を Developer ID 署名し、公証し、staple する。</li>
+        <li>Windows bundle を Authenticode 署名し、全署名対象を検証する。</li>
+        <li>ZIP を再生成する。</li>
+        <li><code>SHA256SUMS.txt</code> と署名ファイルを生成する。</li>
+        <li>ZIP 展開と再構成監査を行う。</li>
+        <li>Release asset を upload する。</li>
+        <li>Release page で asset 表示名と checksum asset の存在を目視確認する。</li>
+      </ol>
+      <div class="danger">この順序を崩すと、署名済みのはずの app を後から書き換えてしまう、checksum が未署名 artifact を指す、notarization 後に ZIP 内容が変わる、といった事故が起きます。</div>
+    </section>
+
+    <section>
+      <h2>この repo に対する具体的な変更対象</h2>
+      <table>
+        <tr><th>改修</th><td><code>scripts/build_macos_standalone.sh</code> から ad-hoc 署名を削除し、必要なら sign script 呼び出しだけを残す。</td></tr>
+        <tr><th>改修</th><td><code>scripts/build_macos_app.sh</code> にも同じ責務分離を入れる。wrapper を配布しないなら release 対象から外す。</td></tr>
+        <tr><th>改修</th><td><code>scripts/sign_and_notarize_macos.sh</code> の ZIP 再生成を metadata 汚染しない形へ変更する。</td></tr>
+        <tr><th>改修</th><td><code>scripts/build_windows_standalone.ps1</code> に Authenticode 署名と検証を追加する。</td></tr>
+        <tr><th>追加</th><td><code>scripts/generate_signed_checksums.sh</code> または同等 script を追加する。</td></tr>
+        <tr><th>改修</th><td><code>.github/workflows/macos-standalone-release.yml</code> と <code>.github/workflows/windows-standalone-release.yml</code> に checksum asset upload を追加する。</td></tr>
+        <tr><th>追加</th><td>必要なら <code>.github/workflows/publish-release.yml</code> を新設し、asset の publish を 1 workflow に集約する。</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>非推奨パターン</h2>
+      <ul>
+        <li>未署名 app / exe を GitHub Releases に直接置く。</li>
+        <li>release notes の本文だけに SHA256 を書く。</li>
+        <li>macOS notarization 後に app 内容を書き換える。</li>
+        <li>Windows で outer exe だけ署名して DLL / PYD を未署名のまま残す。</li>
+        <li>Unicode 名の integrity asset を使い、GitHub の内部正規化挙動に依存する。</li>
+        <li>ローカル build と CI build で署名手順が別物になる。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>最終判断</h2>
+      <p>この repo は、実データ非同梱と release 監査の面ではかなり整いましたが、配布者証明はまだ未完成です。実装優先順位は明確で、最初に macOS の Developer ID + notarization を build pipeline に統合し、次に Windows Authenticode を同じ粒度で build script に入れ、最後に <code>SHA256SUMS.txt</code> と署名ファイルを release asset として必須化します。ここまで入れば、個人配布でも「誰が配ったか」「改ざんされていないか」を受け手が検証できる水準に到達します。</p>
+    </section>
+  </main>
+</body>
+</html>

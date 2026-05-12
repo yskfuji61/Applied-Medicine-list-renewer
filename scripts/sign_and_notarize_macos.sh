@@ -4,12 +4,12 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 APP_NAME="薬剤リスト変換アプリ"
-RELEASE_NAME="macos-standalone-release"
+RELEASE_NAME=${RELEASE_NAME:-macos-standalone-release}
 DIST_DIR="$PROJECT_DIR/dist"
-RELEASE_DIR="$DIST_DIR/$RELEASE_NAME"
-APP_DIR="$RELEASE_DIR/$APP_NAME.app"
-ZIP_PATH="$DIST_DIR/${APP_NAME}-standalone-macos.zip"
-SHA_PATH="$ZIP_PATH.sha256"
+RELEASE_DIR=${RELEASE_DIR:-$DIST_DIR/$RELEASE_NAME}
+APP_DIR=${APP_DIR:-$RELEASE_DIR/$APP_NAME.app}
+ZIP_PATH=${ZIP_PATH:-$DIST_DIR/${APP_NAME}-standalone-macos.zip}
+NOTARY_UPLOAD_PATH=${NOTARY_UPLOAD_PATH:-$DIST_DIR/notary-upload-${RELEASE_NAME}.zip}
 
 SIGN_IDENTITY=${APPLE_SIGN_IDENTITY:-}
 NOTARY_PROFILE=${APPLE_NOTARY_PROFILE:-}
@@ -42,14 +42,17 @@ codesign \
 
 codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
-rm -f "$ZIP_PATH" "$SHA_PATH"
-ditto -c -k --sequesterRsrc --keepParent "$RELEASE_DIR" "$ZIP_PATH"
+rm -f "$NOTARY_UPLOAD_PATH" "$ZIP_PATH"
+(cd "$DIST_DIR" && COPYFILE_DISABLE=1 zip -X -r -y "$NOTARY_UPLOAD_PATH" "$(basename "$RELEASE_DIR")" >/dev/null)
 
-xcrun notarytool submit "$ZIP_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
+xcrun notarytool submit "$NOTARY_UPLOAD_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$APP_DIR"
 spctl -a -vvv "$APP_DIR"
-shasum -a 256 "$ZIP_PATH" > "$SHA_PATH"
+
+rm -f "$ZIP_PATH"
+(cd "$DIST_DIR" && COPYFILE_DISABLE=1 zip -X -r -y "$ZIP_PATH" "$(basename "$RELEASE_DIR")" >/dev/null)
+rm -f "$NOTARY_UPLOAD_PATH"
 
 echo "Signed app: $APP_DIR"
-echo "Notarized zip: $ZIP_PATH"
-echo "SHA256: $SHA_PATH"
+echo "Notarized app: $APP_DIR"
+echo "Release zip: $ZIP_PATH"

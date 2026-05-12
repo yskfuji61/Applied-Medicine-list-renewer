@@ -8,6 +8,16 @@ on:
         required: true
         default: true
         type: boolean
+      release_tag:
+        description: Optional release tag to upload integrity assets to
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  attestations: write
+  id-token: write
 
 jobs:
   build-and-release:
@@ -18,6 +28,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate release upload prerequisites
+        if: ${{ inputs.release_tag != '' && !inputs.notarize }}
+        run: |
+          echo 'release_tag を指定して release へ integrity asset を載せる場合、notarize は true 必須です。' >&2
+          exit 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -68,6 +84,24 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH"
           ./scripts/sign_and_notarize_macos.sh
 
+      - name: Generate integrity assets
+        run: |
+          python scripts/generate_release_integrity.py \
+            --output-dir dist \
+            --checksum-name SHA256SUMS-macos.txt \
+            --manifest-name release-manifest-macos.json \
+            --release-tag "${{ inputs.release_tag }}" \
+            --commit "${{ github.sha }}" \
+            --asset dist/薬剤リスト変換アプリ-standalone-macos.zip
+
+      - name: Attest standalone zip and integrity assets
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            dist/薬剤リスト変換アプリ-standalone-macos.zip
+            dist/SHA256SUMS-macos.txt
+            dist/release-manifest-macos.json
+
       - name: Upload standalone release folder
         uses: actions/upload-artifact@v4
         with:
@@ -80,4 +114,21 @@ jobs:
           name: macos-standalone-zip
           path: |
             dist/薬剤リスト変換アプリ-standalone-macos.zip
-            dist/薬剤リスト変換アプリ-standalone-macos.zip.sha256
+
+      - name: Upload integrity assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-standalone-integrity
+          path: |
+            dist/SHA256SUMS-macos.txt
+            dist/release-manifest-macos.json
+
+      - name: Upload integrity assets to release
+        if: ${{ inputs.release_tag != '' && inputs.notarize }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.release_tag }}" \
+            dist/SHA256SUMS-macos.txt \
+            dist/release-manifest-macos.json \
+            --clobber
