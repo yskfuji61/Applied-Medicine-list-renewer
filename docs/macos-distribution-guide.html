@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>薬剤リスト変換アプリ 配布ガイド</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --panel: rgba(255, 250, 240, 0.92);
+      --ink: #1f2937;
+      --muted: #5b6470;
+      --accent: #0f766e;
+      --accent-soft: #d8f3ef;
+      --line: rgba(15, 118, 110, 0.18);
+      --warn: #9a3412;
+      --shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.16), transparent 30%),
+        radial-gradient(circle at left bottom, rgba(245, 158, 11, 0.12), transparent 35%),
+        var(--bg);
+      line-height: 1.7;
+    }
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+    .hero, section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+    .hero { margin-bottom: 24px; }
+    section { margin-top: 24px; }
+    h1, h2, h3 {
+      margin: 0 0 14px;
+      line-height: 1.25;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: 0.02em;
+    }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.1rem; }
+    p { margin: 0 0 14px; }
+    .lead {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 860px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid var(--line);
+    }
+    ol, ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    li + li { margin-top: 8px; }
+    pre {
+      margin: 12px 0 0;
+      padding: 16px;
+      overflow: auto;
+      border-radius: 18px;
+      background: #14221f;
+      color: #ecfdf5;
+      font-family: "SFMono-Regular", "Menlo", monospace;
+      font-size: 0.92rem;
+    }
+    code {
+      font-family: "SFMono-Regular", "Menlo", monospace;
+      background: rgba(15, 118, 110, 0.08);
+      padding: 0.1em 0.35em;
+      border-radius: 6px;
+    }
+    .warn {
+      color: var(--warn);
+      font-weight: 700;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { width: 24%; }
+    @media (max-width: 720px) {
+      main { padding: 20px 14px 56px; }
+      .hero, section { padding: 20px; border-radius: 20px; }
+      table, tbody, tr, th, td { display: block; width: 100%; }
+      th { padding-bottom: 4px; border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="pill">macOS App / Distribution</div>
+      <h1>薬剤リスト変換アプリ 配布ガイド</h1>
+      <p class="lead">この文書は、Python 同梱の完全スタンドアロン .app ビルド、社内配布、Developer ID 署名、notarization、公開前チェックまでを 1 枚で確認できる運用ガイドです。標準配布物は Python 未導入の macOS 端末でもそのまま実行できます。</p>
+    </div>
+
+    <section>
+      <h2>生成される成果物</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>.app バンドル</h3>
+          <p><code>dist/macos-standalone-release/薬剤リスト変換アプリ.app</code></p>
+          <p>Finder からダブルクリックで実行可能。PyInstaller により Python ランタイムを同梱。</p>
+        </div>
+        <div class="card">
+          <h3>配布フォルダ</h3>
+          <p><code>dist/macos-standalone-release</code></p>
+          <p>app 本体、config、docs、入力データ、参照データ、README、リリースノート雛形をまとめた実行用フォルダ。</p>
+        </div>
+        <div class="card">
+          <h3>配布 ZIP</h3>
+          <p><code>dist/薬剤リスト変換アプリ-standalone-macos.zip</code></p>
+          <p>公開配布対象。署名と notarization はこの ZIP をベースに実行する。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>ビルド手順</h2>
+      <ol>
+        <li>プロジェクトルートで次を実行する。</li>
+      </ol>
+      <pre>./scripts/build_macos_standalone.sh</pre>
+      <ol start="2">
+        <li>完了後に <code>dist/macos-standalone-release</code> と <code>dist/薬剤リスト変換アプリ-standalone-macos.zip</code> を確認する。</li>
+        <li>app 実行時は <code>docs/audit-reports/latest/diff-report.html</code> が自動で開く。</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>現在のランタイム前提</h2>
+      <table>
+        <tr><th>OS</th><td>macOS 12 以上を想定</td></tr>
+        <tr><th>Python</th><td>不要。PyInstaller で同梱済み。</td></tr>
+        <tr><th>入力</th><td><code>260508_Musashino_採用医薬品/references</code> を配布フォルダ内に同梱。</td></tr>
+        <tr><th>参照</th><td><code>旧採用医薬品リスト</code> を配布フォルダ内に同梱。</td></tr>
+        <tr><th>設定</th><td><code>config/defaults.json</code> を配布フォルダに同梱し、app から参照。</td></tr>
+        <tr><th>レポート</th><td>配布フォルダ内の <code>docs/audit-reports/latest</code> に出力される。</td></tr>
+      </table>
+      <p class="warn">社外公開前には Developer ID 署名と notarization を必須にしてください。未署名配布では Gatekeeper 警告が強く出ます。</p>
+    </section>
+
+    <section>
+      <h2>社内配布チェックリスト</h2>
+      <ol>
+        <li>最新コードで <code>PYTHONPATH=src python3 -m unittest tests.test_profile</code> を通す。</li>
+        <li><code>./scripts/build_macos_standalone.sh</code> を実行する。</li>
+        <li>生成された .app を 1 回実行し、HTML レポートが自動で開くことを確認する。</li>
+        <li>配布 ZIP を別ディレクトリに展開し、そこから再実行して相対パス依存がないことを確認する。</li>
+        <li>配布する ZIP にバージョン、作成日、差分要約を添える。</li>
+        <li>配布フォルダに同梱された <code>README.md</code> と <code>RELEASE_NOTES_TEMPLATE.md</code> を更新する。</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>公開前に必須の作業</h2>
+      <ol>
+        <li>個人名、ローカル絶対パス、社内限定ファイル名がレポートや docs に残っていないか確認する。</li>
+        <li>入力 CSV や旧採用リストに第三者提供不可の情報が含まれていないか確認する。</li>
+        <li>配布物の README を追加し、前提 OS、署名状態、既知制約を明記する。</li>
+        <li>リリースごとの内容は <code>RELEASE_NOTES_TEMPLATE.md</code> から起票して確定版を残す。</li>
+        <li>アプリ名、バージョン、ビルド日、変更履歴を固定する。</li>
+        <li>初回起動時の Gatekeeper 警告への案内文を準備する。</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>署名と公証の前提</h2>
+      <table>
+        <tr><th>証明書</th><td>Keychain に Developer ID Application 証明書が入っていること。</td></tr>
+        <tr><th>notarytool</th><td><code>xcrun notarytool store-credentials</code> 済みの keychain profile を持つこと。</td></tr>
+        <tr><th>環境変数</th><td><code>APPLE_SIGN_IDENTITY</code> と <code>APPLE_NOTARY_PROFILE</code> を設定すること。</td></tr>
+      </table>
+      <pre>export APPLE_SIGN_IDENTITY="Developer ID Application: YOUR NAME"
+export APPLE_NOTARY_PROFILE="your-notary-profile"
+./scripts/sign_and_notarize_macos.sh</pre>
+      <p>このスクリプトは codesign、ZIP 再生成、notarytool submit、stapler、spctl 検証、SHA256 出力までを一括で行います。</p>
+    </section>
+
+    <section>
+      <h2>GitHub Actions 公開パイプライン</h2>
+      <p><code>.github/workflows/macos-standalone-release.yml</code> を追加済みです。workflow_dispatch でテスト、standalone build、証明書 import、署名、公証、artifact upload まで流せます。</p>
+      <table>
+        <tr><th>必須 secrets</th><td><code>MACOS_CERTIFICATE_BASE64</code>, <code>MACOS_CERTIFICATE_PASSWORD</code>, <code>KEYCHAIN_PASSWORD</code>, <code>APPLE_SIGN_IDENTITY</code>, <code>APPLE_ID</code>, <code>APPLE_APP_SPECIFIC_PASSWORD</code>, <code>APPLE_TEAM_ID</code></td></tr>
+        <tr><th>notary profile</th><td>workflow 内で <code>ci-notary</code> として一時 keychain に保存</td></tr>
+        <tr><th>成果物</th><td>署名済み ZIP と release フォルダを artifact として保存</td></tr>
+        <tr><th>secret 自動投入</th><td><code>./scripts/configure_github_actions_secrets.sh</code> を利用可能。ただし <code>gh auth login</code> と GitHub remote が前提。</td></tr>
+      </table>
+      <pre>Workflow: macOS Standalone Release
+Trigger: workflow_dispatch
+Main steps:
+1. setup-python
+2. unittest
+3. build_macos_standalone.sh
+4. certificate import
+5. sign_and_notarize_macos.sh
+6. artifact upload</pre>
+    </section>
+
+    <section>
+      <h2>公開パイプライン</h2>
+      <ol>
+        <li>テスト完了</li>
+        <li><code>./scripts/build_macos_standalone.sh</code> でスタンドアロン版を生成</li>
+        <li><code>./scripts/sign_and_notarize_macos.sh</code> で署名・公証</li>
+        <li><code>spctl -a -vvv</code> でアプリ受理を確認</li>
+        <li>ZIP と <code>.sha256</code> を公開</li>
+        <li>README、変更履歴、既知制約を添付</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>推奨の公開フロー</h2>
+      <ol>
+        <li>自動テスト完了</li>
+        <li>スタンドアロン app ビルド</li>
+        <li>署名・公証つき ZIP 作成</li>
+        <li>社内 1 台で受け入れ確認</li>
+        <li>署名・公証</li>
+        <li>最終 ZIP と SHA256 を公開</li>
+        <li>リリースノートと既知制約を添付</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

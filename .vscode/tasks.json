@@ -1,0 +1,106 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "レポート生成: latest",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "pharmalist.cli",
+        "publish-report",
+        "260508_Musashino_採用医薬品/references",
+        "旧採用医薬品リスト",
+        "--name",
+        "vscode-task"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/src"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "レポートを開く: latest",
+      "type": "shell",
+      "command": "open",
+      "args": [
+        "docs/audit-reports/latest/diff-report.html"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "変換実行してレポートを開く",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "レポート生成: latest",
+        "レポートを開く: latest"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "macOSアプリをビルド",
+      "type": "shell",
+      "command": "./scripts/build_macos_app.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "macOSスタンドアロン版をビルド",
+      "type": "shell",
+      "command": "./scripts/build_macos_standalone.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "署名して公証まで実行",
+      "type": "shell",
+      "command": "./scripts/sign_and_notarize_macos.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

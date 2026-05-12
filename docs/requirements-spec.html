@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>薬剤リスト変換アプリ 要件定義書</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --surface: #fffdf9;
+      --surface-alt: #f8f4ed;
+      --text: #1f2933;
+      --muted: #52606d;
+      --line: #d7cbb8;
+      --accent: #8c3b2a;
+      --accent-soft: #f3e2d8;
+      --success: #1f6f50;
+      --warn: #9a6700;
+      --shadow: 0 18px 50px rgba(61, 41, 20, 0.08);
+      --max-width: 1120px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(140, 59, 42, 0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(31, 111, 80, 0.08), transparent 22%),
+        linear-gradient(180deg, #efe7da 0%, var(--bg) 220px, var(--bg) 100%);
+      line-height: 1.7;
+    }
+
+    header {
+      padding: 56px 24px 28px;
+    }
+
+    .hero,
+    main {
+      width: min(calc(100% - 32px), var(--max-width));
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: rgba(255, 253, 249, 0.82);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(215, 203, 184, 0.9);
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 3vw, 3.4rem);
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 1.7rem;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .lead {
+      font-size: 1.04rem;
+      color: var(--muted);
+      max-width: 72ch;
+    }
+
+    main {
+      padding: 20px 0 64px;
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid rgba(215, 203, 184, 0.85);
+      border-radius: 24px;
+      padding: 28px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      grid-column: span 6;
+      background: var(--surface-alt);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .card.full {
+      grid-column: 1 / -1;
+    }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .meta div {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: var(--surface-alt);
+      border: 1px solid var(--line);
+    }
+
+    .label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .value {
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f0e8dc;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid currentColor;
+    }
+
+    .pill.success {
+      color: var(--success);
+      background: rgba(31, 111, 80, 0.08);
+    }
+
+    .pill.warn {
+      color: var(--warn);
+      background: rgba(154, 103, 0, 0.1);
+    }
+
+    code {
+      font-family: "SFMono-Regular", "Menlo", monospace;
+      background: #f3eee5;
+      padding: 0.15em 0.4em;
+      border-radius: 6px;
+      font-size: 0.92em;
+    }
+
+    footer {
+      width: min(calc(100% - 32px), var(--max-width));
+      margin: 0 auto 40px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 900px) {
+      .card {
+        grid-column: 1 / -1;
+      }
+
+      section,
+      .hero {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div class="eyebrow">Requirements Specification</div>
+      <h1>薬剤リスト変換アプリ 要件定義書</h1>
+      <p class="lead">
+        旧採用医薬品リストのテーブル形式を、260508_Musashino_採用医薬品配下のCSV群から再現・生成するためのローカル実行型アプリケーションの要件定義。
+        GPT-5.4 を VS Code 内の Copilot Chat で活用しつつ、本番変換処理は決定論的なロジックとテストで品質保証することを前提とする。
+      </p>
+      <div class="meta">
+        <div>
+          <span class="label">作成日</span>
+          <span class="value">2026-05-12</span>
+        </div>
+        <div>
+          <span class="label">対象リポジトリ</span>
+          <span class="value">薬剤リスト</span>
+        </div>
+        <div>
+          <span class="label">開発前提</span>
+          <span class="value">VS Code + Copilot Chat + GPT-5.4</span>
+        </div>
+        <div>
+          <span class="label">品質方針</span>
+          <span class="value">再現性 / 監査性 / 保守性</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. 背景と目的</h2>
+      <p>
+        現在は新採用医薬品CSV群を都度GPTに渡して整形しているが、この運用は再現性、監査性、処理時間、改版対応、コストの面で不安定である。
+        本アプリの目的は、入力CSV群をローカルで読み込み、旧採用医薬品リストと同等の表形式ファイル群を半自動または自動で生成できるようにすることである。
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>達成すべき状態</h3>
+          <ul>
+            <li>新採用CSV群から旧採用形式の出力を安定して再生成できる。</li>
+            <li>変換結果の根拠がコード、設定、ログで追跡できる。</li>
+            <li>曖昧な一致は人が確認でき、確認結果を再利用できる。</li>
+            <li>将来のCSVレイアウト変更に対して設定更新で追従しやすい。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>採らない方針</h3>
+          <ul>
+            <li>本番変換を毎回LLMの自由生成に依存しない。</li>
+            <li>単純なCSV結合だけで帳票を作らない。</li>
+            <li>未確定一致を自動確定しない。</li>
+            <li>外部APIへ実データを恒常的に送信しない。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 対象データと現状前提</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>区分</th>
+            <th>ファイル群</th>
+            <th>把握済みの性質</th>
+            <th>設計上の意味</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>旧採用側</td>
+            <td>
+              <code>旧採用医薬品リスト/*.csv</code>
+            </td>
+            <td>UTF-8、約 600 から 1345 行、複数の並び替えビューが存在</td>
+            <td>出力の正解例として利用できる。1つの標準マスタから派生生成すべき。</td>
+          </tr>
+          <tr>
+            <td>新採用側</td>
+            <td>
+              <code>260508_Musashino_採用医薬品/references/260508_musashino_pharm_list.csv</code>
+            </td>
+            <td>大容量、通常の同期読み込みでは50MB超級、文字コード注意</td>
+            <td>全件メモリ前提ではなくストリームまたは遅延読込設計が必要。</td>
+          </tr>
+          <tr>
+            <td>新採用側</td>
+            <td>
+              <code>260508_Musashino_採用医薬品/references/260508_musashino_pharm_list_gaiyou.csv</code><br>
+              <code>260508_Musashino_採用医薬品/references/260508_musashino_pharm_list_.chusya.csv</code>
+            </td>
+            <td>unknown-8bit 判定、文字化けリスクあり</td>
+            <td>読み込み時に文字コード判定とフォールバック戦略が必要。</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        旧採用側の件数と新採用側の件数が一致しないため、実装対象は単純マージではなく、採用判定、重複整理、表現統一、並び替えを含む変換システムである。
+      </p>
+    </section>
+
+    <section>
+      <h2>3. スコープ</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>対象範囲</h3>
+          <ul>
+            <li>複数CSVの読み込み、文字コード判定、列マッピング、正規化。</li>
+            <li>標準スキーマへの統合。</li>
+            <li>採用判定、重複解消、未確定候補抽出。</li>
+            <li>旧採用形式に対応する派生CSVの出力。</li>
+            <li>差分レポート、実行ログ、ルール管理。</li>
+            <li>ローカルGUIまたはCLIによる運用。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>対象外</h3>
+          <ul>
+            <li>院内システムとの直接連携。</li>
+            <li>複数病院向けの一般化プロダクト化。</li>
+            <li>クラウド常駐サービス化。</li>
+            <li>OCRによる紙帳票読み取り。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 想定利用者</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>利用者</th>
+            <th>主目的</th>
+            <th>必要な操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>薬剤部担当者</td>
+            <td>CSV群から旧採用形式の一覧を生成する</td>
+            <td>入力指定、実行、未確定候補確認、出力保存</td>
+          </tr>
+          <tr>
+            <td>メンテナ</td>
+            <td>ルール更新と品質管理</td>
+            <td>例外辞書編集、列マッピング修正、テスト実行</td>
+          </tr>
+          <tr>
+            <td>監査担当</td>
+            <td>変換根拠を追跡する</td>
+            <td>差分確認、実行履歴確認、ログ閲覧</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>5. 目標システム像</h2>
+      <p>
+        アプリは「決定論的な変換コア」を中心に構成し、その外側に CLI と軽量GUIを置く。GPT-5.4 は開発補助と例外候補整理に利用し、日常運用の主処理はローカルロジックで完結させる。
+      </p>
+      <div class="grid">
+        <div class="card full">
+          <h3>論理構成</h3>
+          <ul>
+            <li>入力層: CSV検出、文字コード推定、必須列検査、入力プロファイル作成。</li>
+            <li>正規化層: 列名統一、文字種統一、名称正規化、欠損補完、剤形区分付与。</li>
+            <li>照合層: 点数コード、YJコード、名称、例外辞書による多段一致。</li>
+            <li>判定層: 採用可否、保留、重複解消、優先ソース選択。</li>
+            <li>出力層: 標準マスタ、旧採用互換CSV群、差分レポート、監査ログ。</li>
+            <li>運用層: CLI、GUI、設定ファイル、テスト、パッケージング。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. 機能要件</h2>
+      <h3>6.1 入力処理</h3>
+      <ul>
+        <li>利用者は入力対象フォルダまたはCSVファイルを選択できること。</li>
+        <li>アプリは対象CSVの存在、読込可否、文字コード、列名一覧、件数を検査できること。</li>
+        <li>文字コードは UTF-8、UTF-8 BOM、CP932、Shift_JIS を優先候補として再試行できること。</li>
+        <li>大容量CSVはストリームまたは遅延評価で処理できること。</li>
+      </ul>
+
+      <h3>6.2 標準化</h3>
+      <ul>
+        <li>入力ごとに異なる列名を標準スキーマへマッピングできること。</li>
+        <li>製品名、一般名、YJコード、点数コード、薬効コードなど主要列を標準化できること。</li>
+        <li>名称正規化は全角半角、ダッシュ種別、空白種別、括弧注記、記号ゆれを吸収できること。</li>
+        <li>各レコードに由来ファイル名、元行番号、変換時刻を保持できること。</li>
+      </ul>
+
+      <h3>6.3 照合・判定</h3>
+      <ul>
+        <li>一致戦略は点数コード完全一致、YJコード一致、正規化名称一致、例外辞書一致、曖昧一致候補提示の順に適用できること。</li>
+        <li>曖昧一致は自動確定せず、候補とスコアを提示すること。</li>
+        <li>重複候補が出た場合は優先規則に従い1件へ統合、または保留にできること。</li>
+        <li>採用対象外、情報不足、列欠損は理由つきで除外または保留にできること。</li>
+      </ul>
+
+      <h3>6.4 出力</h3>
+      <ul>
+        <li>標準化済みマスタCSVを出力できること。</li>
+        <li>旧採用医薬品リスト互換の派生CSV群を出力できること。</li>
+        <li>少なくとも作業シート、一般名順、製品名順、薬効順、薬効コード順に相当する出力を生成できること。</li>
+        <li>出力ごとに件数、生成時刻、使用ルールバージョンを付記または別ファイルに保存できること。</li>
+      </ul>
+
+      <h3>6.5 差分・監査</h3>
+      <ul>
+        <li>前回出力との件数差分、新規、削除、名称変更、コード変更、保留件数を比較できること。</li>
+        <li>実行ログに入力ハッシュ、使用設定、変換件数、警告件数、エラー件数を記録できること。</li>
+        <li>監査用に「なぜその行が採用または除外されたか」を追跡できること。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. 標準スキーマ要件</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>列名</th>
+            <th>必須</th>
+            <th>概要</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>record_id</td>
+            <td><span class="pill success">必須</span></td>
+            <td>内部一意ID</td>
+            <td>再生成時も重複しない形式</td>
+          </tr>
+          <tr>
+            <td>source_file</td>
+            <td><span class="pill success">必須</span></td>
+            <td>由来ファイル名</td>
+            <td>監査用</td>
+          </tr>
+          <tr>
+            <td>source_row_number</td>
+            <td><span class="pill success">必須</span></td>
+            <td>元データ行番号</td>
+            <td>監査用</td>
+          </tr>
+          <tr>
+            <td>tensu_code</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>点数コード</td>
+            <td>主要照合キー</td>
+          </tr>
+          <tr>
+            <td>yj_code</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>YJコード</td>
+            <td>主要照合キー</td>
+          </tr>
+          <tr>
+            <td>pharmacological_code</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>薬効コード</td>
+            <td>派生ビューで使用</td>
+          </tr>
+          <tr>
+            <td>pharmacological_name</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>薬効名称</td>
+            <td>派生ビューで使用</td>
+          </tr>
+          <tr>
+            <td>display_name</td>
+            <td><span class="pill success">必須</span></td>
+            <td>表示用製品名</td>
+            <td>旧採用互換出力の中心列</td>
+          </tr>
+          <tr>
+            <td>generic_name</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>一般名称</td>
+            <td>並び替えと照合補助</td>
+          </tr>
+          <tr>
+            <td>normalized_display_name</td>
+            <td><span class="pill success">必須</span></td>
+            <td>照合用正規化名称</td>
+            <td>内部処理専用</td>
+          </tr>
+          <tr>
+            <td>normalized_generic_name</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>照合用正規化一般名</td>
+            <td>内部処理専用</td>
+          </tr>
+          <tr>
+            <td>dosage_form_category</td>
+            <td><span class="pill warn">条件付き</span></td>
+            <td>剤形区分</td>
+            <td>注射、内服、外用など</td>
+          </tr>
+          <tr>
+            <td>adoption_status</td>
+            <td><span class="pill success">必須</span></td>
+            <td>採用、除外、保留</td>
+            <td>最終判定</td>
+          </tr>
+          <tr>
+            <td>match_strategy</td>
+            <td><span class="pill success">必須</span></td>
+            <td>一致判定の根拠</td>
+            <td>完全一致、辞書一致など</td>
+          </tr>
+          <tr>
+            <td>decision_reason</td>
+            <td><span class="pill success">必須</span></td>
+            <td>採用または除外理由</td>
+            <td>監査用</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>8. ルール管理要件</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>設定ファイル化すべきもの</h3>
+          <ul>
+            <li>入力ファイルごとの列マッピング定義</li>
+            <li>採用対象抽出ルール</li>
+            <li>除外ルール</li>
+            <li>名称置換辞書</li>
+            <li>例外的一致辞書</li>
+            <li>出力ビューごとの並び順定義</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>更新原則</h3>
+          <ul>
+            <li>ルール変更はコード変更と切り分ける。</li>
+            <li>ルール変更ごとにバージョンと変更理由を持つ。</li>
+            <li>本番運用で確定した手修正は辞書へ還元する。</li>
+            <li>辞書変更時はゴールデンテストを再実行する。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>9. 非機能要件</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>分類</th>
+            <th>要件</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>性能</td>
+            <td>数千行から数万行規模のCSVを実用時間で処理できること。大容量CSVでもメモリ逼迫を避けること。</td>
+          </tr>
+          <tr>
+            <td>再現性</td>
+            <td>同じ入力、同じ設定、同じアプリ版数なら常に同じ出力になること。</td>
+          </tr>
+          <tr>
+            <td>監査性</td>
+            <td>入力、変換、出力、判定理由、ルール版数が追跡可能であること。</td>
+          </tr>
+          <tr>
+            <td>保守性</td>
+            <td>入力フォーマット変更時に設定ファイルと限定的なコード修正で追従できること。</td>
+          </tr>
+          <tr>
+            <td>可観測性</td>
+            <td>警告件数、保留件数、未一致件数、処理時間を可視化できること。</td>
+          </tr>
+          <tr>
+            <td>可用性</td>
+            <td>ネットワーク非依存のローカル実行が可能であること。</td>
+          </tr>
+          <tr>
+            <td>セキュリティ</td>
+            <td>実データを無断で外部送信しないこと。必要時も明示操作がない限りAI送信を行わないこと。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>10. 推奨技術構成</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>必須候補</h3>
+          <ul>
+            <li>言語: Python 3.12</li>
+            <li>表データ処理: Polars</li>
+            <li>補助クエリ: DuckDB</li>
+            <li>CLI: Typer</li>
+            <li>検証: Pydantic v2 / Pandera</li>
+            <li>曖昧一致: RapidFuzz</li>
+            <li>テスト: pytest / Hypothesis</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>GUI候補</h3>
+          <ul>
+            <li>初期版: Streamlit または Textual</li>
+            <li>配布重視: Tauri フロントエンドを後段で検討</li>
+            <li>初期段階ではCLI優先でコアを安定化する</li>
+          </ul>
+        </div>
+        <div class="card full">
+          <h3>技術原則</h3>
+          <ul>
+            <li>変換コアは UI 非依存のライブラリとして設計する。</li>
+            <li>AI利用箇所は補助的に限定し、変換結果の決定はコードと設定で行う。</li>
+            <li>CSV処理の境界で型検証を行い、不正値は即時に警告または失敗させる。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>11. GPT-5.4 と Copilot Chat の利用方針</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>用途</th>
+            <th>利用可否</th>
+            <th>理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>要件整理、列マッピング案、テストケース案</td>
+            <td><span class="pill success">推奨</span></td>
+            <td>探索とドラフト生成に強い。</td>
+          </tr>
+          <tr>
+            <td>例外辞書の候補作成</td>
+            <td><span class="pill success">推奨</span></td>
+            <td>未一致行の整理を高速化できる。</td>
+          </tr>
+          <tr>
+            <td>本番変換の最終判断</td>
+            <td><span class="pill warn">非推奨</span></td>
+            <td>再現性、監査性、誤判定統制の観点で不適。</td>
+          </tr>
+          <tr>
+            <td>実データの常時外部送信</td>
+            <td><span class="pill warn">禁止</span></td>
+            <td>セキュリティと運用安定性の観点で不適。</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Copilot Chat への依頼は大粒度にせず、読み込み、正規化、照合、出力、テストの単位で分割する。これによりレビューと差分管理がしやすくなる。
+      </p>
+    </section>
+
+    <section>
+      <h2>12. テスト要件</h2>
+      <ul>
+        <li>文字コード判定テスト: UTF-8、BOM付きUTF-8、CP932 の読込確認。</li>
+        <li>列マッピングテスト: 必須列欠落時の失敗確認、既知フォーマットの正常読込確認。</li>
+        <li>名称正規化テスト: ダッシュ、空白、全半角、括弧付き注記の冪等性確認。</li>
+        <li>照合テスト: 点数コード一致、YJコード一致、辞書一致、保留判定の確認。</li>
+        <li>ゴールデンファイルテスト: 既知入力から既知出力が完全一致すること。</li>
+        <li>回帰テスト: ルール更新やライブラリアップデート後も主要出力が崩れないこと。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>13. 受け入れ条件</h2>
+      <ul>
+        <li>入力CSV群から標準化マスタを生成できること。</li>
+        <li>旧採用互換の複数CSVを規定の並び順で出力できること。</li>
+        <li>未確定候補が一覧化され、手動確認後に再利用できること。</li>
+        <li>前回差分レポートを生成できること。</li>
+        <li>同一入力で出力が安定すること。</li>
+        <li>テストスイートが整備され、主要経路で自動検証できること。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>14. 実装フェーズ案</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>フェーズ</th>
+            <th>目的</th>
+            <th>成果物</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Phase 1</td>
+            <td>読み込みと標準化の確立</td>
+            <td>CLI、入力検査、標準スキーマ出力</td>
+          </tr>
+          <tr>
+            <td>Phase 2</td>
+            <td>照合と派生出力の確立</td>
+            <td>一致判定、旧採用互換CSV出力、差分レポート</td>
+          </tr>
+          <tr>
+            <td>Phase 3</td>
+            <td>運用性向上</td>
+            <td>GUI、辞書編集導線、実行履歴</td>
+          </tr>
+          <tr>
+            <td>Phase 4</td>
+            <td>配布と監査強化</td>
+            <td>アプリ配布物、監査メタデータ、ドキュメント整備</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>15. リスクと対策</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>リスク</th>
+            <th>影響</th>
+            <th>対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>文字コード判定失敗</td>
+            <td>文字化け、照合率低下</td>
+            <td>候補順で再試行し、失敗時はプレビューで確認させる。</td>
+          </tr>
+          <tr>
+            <td>列レイアウト変更</td>
+            <td>読込失敗</td>
+            <td>列マッピング設定を外出しし、必須列検査で早期検知する。</td>
+          </tr>
+          <tr>
+            <td>名称揺れ増大</td>
+            <td>未一致増加</td>
+            <td>正規化ルールと例外辞書を継続拡張する。</td>
+          </tr>
+          <tr>
+            <td>LLM依存の拡大</td>
+            <td>再現性低下</td>
+            <td>AIは補助用途に限定し、本番変換から切り離す。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    本書は、現時点で確認できたCSV構造と運用前提に基づく実装用要件定義書である。次工程では列マッピング仕様書、例外辞書仕様、CLI入出力仕様へ分解して実装可能な単位へ落とし込む。
+  </footer>
+</body>
+</html>

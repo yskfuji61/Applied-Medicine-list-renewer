@@ -1,0 +1,249 @@
+{
+  "source_priority": {
+    "reference_main": 1,
+    "reference_gaiyou": 2,
+    "reference_chusya": 3,
+    "old_worksheet": 4
+  },
+  "masters": {
+    "pharmacological_code": "旧採用医薬品リスト/薬効コード-表1.csv"
+  },
+  "pharmacological_hierarchy": {
+    "expansion_modes": [
+      "prefix_ancestors",
+      "hundred_group_descendants"
+    ],
+    "legacy_explicit_include_codes": [
+      "2720",
+      "2730",
+      "2740",
+      "2750",
+      "4100",
+      "4121",
+      "4191",
+      "4199",
+      "4300",
+      "7400",
+      "7450",
+      "7451"
+    ]
+  },
+  "pharmacological_fill": {
+    "supplement_sources": [
+      "旧採用医薬品リスト/■作業シート-表1.csv"
+    ],
+    "match_fields": [
+      "tensu_code",
+      "yj_code",
+      "display_name",
+      "generic_name"
+    ]
+  },
+  "legacy_view_scope": {
+    "enabled": true,
+    "reference_sources": [
+      "旧採用医薬品リスト/■作業シート-表1.csv"
+    ],
+    "match_fields": [
+      "tensu_code",
+      "yj_code"
+    ],
+    "include_non_adopted_matches": true
+  },
+  "legacy_view_overrides": {
+    "enabled": true,
+    "reference_sources": [
+      "旧採用医薬品リスト/■作業シート-表1.csv"
+    ],
+    "match_fields": [
+      "tensu_code",
+      "yj_code"
+    ],
+    "override_fields": [
+      "yj_code",
+      "pharmacological_code",
+      "pharmacological_name",
+      "display_name",
+      "generic_name",
+      "usage_purchase_flag"
+    ]
+  },
+  "legacy_view_order": {
+    "enabled": true,
+    "source_files": {
+      "worksheet": "旧採用医薬品リスト/■作業シート-表1.csv",
+      "generic": "旧採用医薬品リスト/一般名順-表1.csv",
+      "product": "旧採用医薬品リスト/製品名順-表1.csv",
+      "pharmacological": "旧採用医薬品リスト/薬効順-表1.csv",
+      "pharmacological_code": "旧採用医薬品リスト/薬効コード-表1.csv"
+    }
+  },
+  "legacy_view_adjustments": {
+    "explicit_exclusions": [
+      { "match": { "tensu_code": "140002" } },
+      { "match": { "tensu_code": "140492" } },
+      { "match": { "tensu_code": "140493" } },
+      { "match": { "tensu_code": "140494" } },
+      { "match": { "tensu_code": "140496" } },
+      { "match": { "tensu_code": "140497" } },
+      { "match": { "tensu_code": "142292" } },
+      { "match": { "tensu_code": "142937" } },
+      { "match": { "tensu_code": "143071" } },
+      { "match": { "tensu_code": "143142" } },
+      { "match": { "tensu_code": "143172" } },
+      { "match": { "tensu_code": "143185" } },
+      { "match": { "tensu_code": "143186" } },
+      { "match": { "tensu_code": "160098" } },
+      { "match": { "tensu_code": "160500" } },
+      { "match": { "tensu_code": "160792" } },
+      { "match": { "tensu_code": "160794" } },
+      { "match": { "tensu_code": "160799" } },
+      { "match": { "tensu_code": "160813" } },
+      { "match": { "tensu_code": "160814" } },
+      { "match": { "tensu_code": "170167" } },
+      { "match": { "tensu_code": "170168" } },
+      { "match": { "tensu_code": "170332" } },
+      { "match": { "tensu_code": "170601" } },
+      { "match": { "tensu_code": "170674" } },
+      { "match": { "tensu_code": "170697" } },
+      { "match": { "tensu_code": "170716" } },
+      { "match": { "tensu_code": "170765" } },
+      { "match": { "tensu_code": "170977" } },
+      { "match": { "tensu_code": "170978" } }
+    ],
+    "aliases": [
+      {
+        "match": { "tensu_code": "142818" },
+        "override": {
+          "tensu_code": "142030",
+          "yj_code": "3999043F2026",
+          "pharmacological_code": "3999",
+          "pharmacological_name": "他に分類されない代謝性医薬品その他",
+          "display_name": "《COVID用》ｵﾙﾐｴﾝﾄ錠4mg",
+          "generic_name": "バリシチニブ錠",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "160723" },
+        "override": {
+          "tensu_code": "160129",
+          "yj_code": "2612701Q2133",
+          "pharmacological_code": "2612",
+          "pharmacological_name": "ヨウ素化合物",
+          "display_name": "ﾎﾟﾋﾞﾄﾞﾝﾖｰﾄﾞｹﾞﾙ10%(4g/本)",
+          "generic_name": "ポビドンヨードゲル",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "160836" },
+        "override": {
+          "tensu_code": "170960",
+          "yj_code": "631341DA1025",
+          "pharmacological_code": "6313",
+          "pharmacological_name": "ウイルスワクチン類",
+          "display_name": "ｺﾐﾅﾃｨRTU筋注（ｺﾛﾅﾜｸﾁﾝ・P）0.3mL",
+          "generic_name": "乾燥組織培養不活化A型肝炎ﾜｸﾁﾝ",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "170991" },
+        "override": {
+          "tensu_code": "170548",
+          "yj_code": "631140EC1022",
+          "pharmacological_code": "6311",
+          "pharmacological_name": "細菌ワクチン類",
+          "display_name": "ﾌﾟﾚﾍﾞﾅｰ13水性懸濁注",
+          "generic_name": "沈降13価肺炎球菌結合型ﾜｸﾁﾝ(無毒性変異ｼﾞﾌﾃﾘｱ毒素結合体)",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "170992" },
+        "override": {
+          "tensu_code": "170960",
+          "yj_code": "631341DA1025",
+          "pharmacological_code": "6313",
+          "pharmacological_name": "ウイルスワクチン類",
+          "display_name": "ｺﾐﾅﾃｨRTU筋注（ｺﾛﾅﾜｸﾁﾝ・P）0.3mL",
+          "generic_name": "乾燥組織培養不活化A型肝炎ﾜｸﾁﾝ",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "171026" },
+        "override": {
+          "tensu_code": "170036",
+          "yj_code": "1214400A8051",
+          "pharmacological_code": "1214",
+          "pharmacological_name": "キシリジン系製剤",
+          "display_name": "ｷｼﾛｶｲﾝ注ﾎﾟﾘｱﾝﾌﾟ1% 10mL",
+          "generic_name": "ﾘﾄﾞｶｲﾝ塩酸塩注射液",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "171027" },
+        "override": {
+          "tensu_code": "170035",
+          "yj_code": "1214400A7055",
+          "pharmacological_code": "1214",
+          "pharmacological_name": "キシリジン系製剤",
+          "display_name": "ｷｼﾛｶｲﾝ注ﾎﾟﾘｱﾝﾌﾟ1% 5ml",
+          "generic_name": "ﾘﾄﾞｶｲﾝ塩酸塩注射液",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "171032" },
+        "override": {
+          "tensu_code": "170076",
+          "yj_code": "2123404D1033",
+          "pharmacological_code": "2123",
+          "pharmacological_name": "β－遮断剤",
+          "display_name": "ｵﾉｱｸﾄ点滴静注用50mg",
+          "generic_name": "ﾗﾝｼﾞｵﾛｰﾙ塩酸塩注射用(1)",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "171051" },
+        "override": {
+          "tensu_code": "170120",
+          "yj_code": "2234400A1062",
+          "pharmacological_code": "2234",
+          "pharmacological_name": "ブロムヘキシン製剤",
+          "display_name": "ﾋﾞｿﾙﾎﾞﾝ注4mg 0.2%2mL",
+          "generic_name": "ﾌﾞﾛﾑﾍｷｼﾝ塩酸塩注射液",
+          "usage_purchase_flag": ""
+        }
+      },
+      {
+        "match": { "tensu_code": "171052" },
+        "override": {
+          "tensu_code": "170960",
+          "yj_code": "631341DA1025",
+          "pharmacological_code": "6313",
+          "pharmacological_name": "ウイルスワクチン類",
+          "display_name": "ｺﾐﾅﾃｨRTU筋注（ｺﾛﾅﾜｸﾁﾝ・P）0.3mL",
+          "generic_name": "乾燥組織培養不活化A型肝炎ﾜｸﾁﾝ",
+          "usage_purchase_flag": ""
+        }
+      }
+    ],
+    "explicit_duplicates": [
+      {
+        "match": {
+          "tensu_code": "160187"
+        }
+      },
+      {
+        "match": {
+          "tensu_code": "170163"
+        }
+      }
+    ]
+  }
+}

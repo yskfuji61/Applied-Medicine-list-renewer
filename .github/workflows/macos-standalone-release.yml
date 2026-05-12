@@ -1,0 +1,83 @@
+name: macOS Standalone Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: Sign and notarize the standalone app
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    env:
+      APPLE_SIGN_IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
+      APPLE_NOTARY_PROFILE: ci-notary
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install build dependencies
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Run tests
+        run: PYTHONPATH=src python -m unittest tests.test_profile
+
+      - name: Build standalone release
+        run: |
+          chmod +x scripts/build_macos_standalone.sh scripts/sign_and_notarize_macos.sh
+          ./scripts/build_macos_standalone.sh
+
+      - name: Prepare signing keychain
+        if: ${{ inputs.notarize }}
+        env:
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build-signing.keychain-db"
+          echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          xcrun notarytool store-credentials "$APPLE_NOTARY_PROFILE" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --keychain "$KEYCHAIN_PATH"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Sign and notarize
+        if: ${{ inputs.notarize }}
+        env:
+          KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
+        run: |
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          ./scripts/sign_and_notarize_macos.sh
+
+      - name: Upload standalone release folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-standalone-release
+          path: dist/macos-standalone-release
+
+      - name: Upload standalone zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-standalone-zip
+          path: |
+            dist/薬剤リスト変換アプリ-standalone-macos.zip
+            dist/薬剤リスト変換アプリ-standalone-macos.zip.sha256
