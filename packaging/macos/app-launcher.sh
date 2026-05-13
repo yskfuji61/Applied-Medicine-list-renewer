@@ -6,6 +6,8 @@ CONTENTS_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 APP_DIR=$(cd "$CONTENTS_DIR/.." && pwd)
 RELEASE_DIR=$(cd "$APP_DIR/.." && pwd)
 RUNTIME_DIR="$CONTENTS_DIR/Resources/runtime"
+APP_SUPPORT_DIR="$HOME/Library/Application Support/jp.musashino.pharmalist"
+WORKSPACE_CACHE_PATH="$APP_SUPPORT_DIR/workspace-root.txt"
 WORKSPACE_ROOT=""
 LOG_DIR=""
 LOG_FILE="$LOG_DIR/pharmalist-app.log"
@@ -36,16 +38,67 @@ require_path() {
   fi
 }
 
+is_valid_workspace_root() {
+  local candidate="$1"
+  [[ -d "$candidate/260508_Musashino_採用医薬品/references" && -d "$candidate/旧採用医薬品リスト" ]]
+}
+
+read_cached_workspace_root() {
+  if [[ -f "$WORKSPACE_CACHE_PATH" ]]; then
+    local cached_path
+    cached_path=$(<"$WORKSPACE_CACHE_PATH")
+    if [[ -n "$cached_path" ]] && is_valid_workspace_root "$cached_path"; then
+      echo "$cached_path"
+      return 0
+    fi
+  fi
+  return 1
+}
+
+cache_workspace_root() {
+  local workspace_root="$1"
+  mkdir -p "$APP_SUPPORT_DIR"
+  printf '%s\n' "$workspace_root" > "$WORKSPACE_CACHE_PATH"
+}
+
+prompt_for_workspace_root() {
+  while true; do
+    local selected_path
+    if ! selected_path=$(osascript <<'APPLESCRIPT'
+set chosenFolder to choose folder with prompt "260508_Musashino_採用医薬品 と 旧採用医薬品リスト を含む作業フォルダを選択してください。"
+POSIX path of chosenFolder
+APPLESCRIPT
+); then
+      return 1
+    fi
+    selected_path=${selected_path%/}
+    if is_valid_workspace_root "$selected_path"; then
+      cache_workspace_root "$selected_path"
+      echo "$selected_path"
+      return 0
+    fi
+    osascript -e 'display alert "薬剤リスト変換アプリ" message "選択したフォルダに 260508_Musashino_採用医薬品/references と 旧採用医薬品リスト がありません。" as critical' >/dev/null 2>&1 || true
+  done
+}
+
 find_workspace_root() {
+  if [[ -n "${PHARMALIST_WORKSPACE_ROOT:-}" ]] && is_valid_workspace_root "$PHARMALIST_WORKSPACE_ROOT"; then
+    echo "$PHARMALIST_WORKSPACE_ROOT"
+    return 0
+  fi
+  if read_cached_workspace_root; then
+    return 0
+  fi
   local candidate="$RELEASE_DIR"
   while [[ "$candidate" != "/" ]]; do
-    if [[ -d "$candidate/260508_Musashino_採用医薬品/references" && -d "$candidate/旧採用医薬品リスト" ]]; then
+    if is_valid_workspace_root "$candidate"; then
+      cache_workspace_root "$candidate"
       echo "$candidate"
       return 0
     fi
     candidate=$(cd "$candidate/.." && pwd)
   done
-  return 1
+  prompt_for_workspace_root
 }
 
 prepare_runtime_config() {
@@ -82,8 +135,8 @@ if ! WORKSPACE_ROOT=$(find_workspace_root); then
   mkdir -p "$RELEASE_DIR/logs"
   LOG_DIR="$RELEASE_DIR/logs"
   LOG_FILE="$LOG_DIR/pharmalist-app.log"
-  echo "Expected sibling workspace directories were not found above: $RELEASE_DIR" > "$LOG_FILE"
-  alert "入力データと旧採用医薬品リストが見つかりません。\n配布フォルダを 260508_Musashino_採用医薬品 と 旧採用医薬品リスト の近くに置いてください。"
+  echo "Workspace root selection was cancelled or no valid workspace was found. Release dir: $RELEASE_DIR" > "$LOG_FILE"
+  alert "作業フォルダを特定できませんでした。\n260508_Musashino_採用医薬品 と 旧採用医薬品リスト を含むフォルダを選択してください。"
   exit 1
 fi
 

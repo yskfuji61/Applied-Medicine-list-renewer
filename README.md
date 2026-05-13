@@ -128,7 +128,7 @@ PYTHONPATH=src python3 -m pharmalist.cli publish-report \
 ./scripts/build_macos_standalone.sh
 ```
 
-build script は実データを配布物に含めません。生成された release フォルダや `.app` は、親階層のどこかに `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` がある sibling workspace で使ってください。
+build script は実データを配布物に含めません。生成された release フォルダや `.app` は sibling workspace で使うのが基本ですが、`.app` を `/Applications` に置いた場合でも初回起動時に `260508_Musashino_採用医薬品` と `旧採用医薬品リスト` を含む作業フォルダを選択すれば使えます。選択した作業フォルダは `~/Library/Application Support/jp.musashino.pharmalist/workspace-root.txt` に保存され、次回以降の起動で再利用されます。
 
 ### Windows スタンドアロン版ビルド
 

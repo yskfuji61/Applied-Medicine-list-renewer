@@ -140,7 +140,7 @@
   旧採用医薬品リスト/
   audit-reports/
   dist/</pre>
-      <p>アプリ用のコード repo は <code>Applied-Medicine-list-renewer</code> に置き、入力データ、旧採用医薬品リスト、監査レポートは親ディレクトリに並べます。build script はこの sibling 構成を前提に動作します。</p>
+      <p>アプリ用のコード repo は <code>Applied-Medicine-list-renewer</code> に置き、入力データ、旧採用医薬品リスト、監査レポートは親ディレクトリに並べます。build script はこの sibling 構成を前提に動作しますが、配布済みの <code>.app</code> を <code>/Applications</code> に移動した場合でも、初回起動時に作業フォルダを選択すれば利用できます。</p>
     </section>
 
     <section>
@@ -172,8 +172,9 @@
       <pre>./scripts/build_macos_standalone.sh</pre>
       <ol start="2">
         <li>完了後に <code>dist/macos-standalone-release</code> と <code>dist/薬剤リスト変換アプリ-standalone-macos.zip</code> を確認する。</li>
-        <li>app 実行時に、配布フォルダの上位階層のどこかに <code>260508_Musashino_採用医薬品</code> と <code>旧採用医薬品リスト</code> が存在することを確認する。</li>
+        <li>app 実行時は、まず保存済みの作業フォルダ、次に app の上位階層を探索し、見つからない場合は <code>260508_Musashino_採用医薬品</code> と <code>旧採用医薬品リスト</code> を含む作業フォルダの選択ダイアログを表示する。</li>
         <li>app 実行時は sibling workspace 側の <code>audit-reports/latest/diff-report.html</code> が自動で開く。</li>
+        <li>選択した作業フォルダは <code>~/Library/Application Support/jp.musashino.pharmalist/workspace-root.txt</code> に保存され、次回以降の起動で再利用される。</li>
       </ol>
     </section>
 
@@ -182,8 +183,8 @@
       <table>
         <tr><th>OS</th><td>macOS 12 以上を想定</td></tr>
         <tr><th>Python</th><td>不要。PyInstaller で同梱済み。</td></tr>
-        <tr><th>入力</th><td>配布物には同梱しない。実行時に上位階層から <code>260508_Musashino_採用医薬品/references</code> を探索する。</td></tr>
-        <tr><th>参照</th><td>配布物には同梱しない。実行時に上位階層から <code>旧採用医薬品リスト</code> を探索する。</td></tr>
+        <tr><th>入力</th><td>配布物には同梱しない。実行時に保存済み作業フォルダまたは app の上位階層から <code>260508_Musashino_採用医薬品/references</code> を探索し、見つからない場合は作業フォルダ選択を促す。</td></tr>
+        <tr><th>参照</th><td>配布物には同梱しない。実行時に保存済み作業フォルダまたは app の上位階層から <code>旧採用医薬品リスト</code> を探索し、見つからない場合は作業フォルダ選択を促す。</td></tr>
         <tr><th>設定</th><td><code>config/defaults.json</code> を配布フォルダに同梱し、app から参照。</td></tr>
         <tr><th>レポート</th><td>sibling workspace 側の <code>audit-reports/latest</code> に出力される。</td></tr>
       </table>
