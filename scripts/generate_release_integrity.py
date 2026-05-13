@@ -24,6 +24,19 @@ def infer_platform(name: str) -> str:
     return "unknown"
 
 
+def parse_published_name_overrides(values: list[str]) -> dict[Path, str]:
+    overrides: dict[Path, str] = {}
+    for value in values:
+        raw_path, separator, published_name = value.partition("=")
+        if not separator or not raw_path or not published_name:
+            raise SystemExit(
+                f"invalid --published-name value: {value!r}; expected /path/to/asset=published-name"
+            )
+        asset_path = Path(raw_path).expanduser().resolve()
+        overrides[asset_path] = published_name
+    return overrides
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", required=True)
@@ -32,10 +45,17 @@ def main() -> int:
     parser.add_argument("--release-tag", default="")
     parser.add_argument("--commit", default="")
     parser.add_argument("--asset", action="append", required=True)
+    parser.add_argument(
+        "--published-name",
+        action="append",
+        default=[],
+        help="override checksum/manifest name for an asset using /path/to/asset=published-name",
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    published_name_overrides = parse_published_name_overrides(args.published_name)
 
     assets: list[dict[str, object]] = []
     checksum_lines: list[str] = []
@@ -45,13 +65,15 @@ def main() -> int:
         if not asset_path.is_file():
             raise SystemExit(f"missing asset: {asset_path}")
         digest = sha256_file(asset_path)
-        checksum_lines.append(f"{digest}  {asset_path.name}")
+        published_name = published_name_overrides.get(asset_path, asset_path.name)
+        checksum_lines.append(f"{digest}  {published_name}")
         assets.append(
             {
-                "name": asset_path.name,
+                "name": published_name,
+                "source_name": asset_path.name,
                 "sha256": digest,
                 "size": asset_path.stat().st_size,
-                "platform": infer_platform(asset_path.name),
+                "platform": infer_platform(published_name),
             }
         )
 

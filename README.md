@@ -28,11 +28,11 @@
 
 ## Release 配布物の検証
 
-GitHub Release から次の 6 ファイルを同じディレクトリへ取得してから検証します。
+GitHub Release から次の 6 ファイルを同じディレクトリへ取得してから検証します。ZIP asset は Release ページ上では日本語 label で表示されますが、ダウンロード時のファイル名は GitHub-managed storage name になります。
 
-- `薬剤リスト変換アプリ-macos.zip`
-- `薬剤リスト変換アプリ-standalone-macos.zip`
-- `薬剤リスト変換アプリ-standalone-windows.zip`
+- `-macos.zip`
+- `-standalone-macos.zip`
+- `-standalone-windows.zip`
 - `SHA256SUMS.txt`
 - `SHA256SUMS.txt.minisig`
 - `minisign.pub`
@@ -96,6 +96,8 @@ $expected.Keys | Sort-Object | ForEach-Object {
 ```
 
 `minisign` の trusted comment は `Applied-Medicine-list-renewer release checksums` です。この文字列も検証時に確認してください。
+
+運用側の固定ルールと鍵ローテーション、バックアップ、失効対応は `docs/release-integrity-operations.md` を参照してください。
 
 ## ローカル実行
 
