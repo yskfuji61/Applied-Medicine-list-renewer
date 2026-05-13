@@ -26,6 +26,77 @@
 - `docs/macos-distribution-guide.html`
 - `docs/windows-distribution-guide.md`
 
+## Release 配布物の検証
+
+GitHub Release から次の 6 ファイルを同じディレクトリへ取得してから検証します。
+
+- `薬剤リスト変換アプリ-macos.zip`
+- `薬剤リスト変換アプリ-standalone-macos.zip`
+- `薬剤リスト変換アプリ-standalone-windows.zip`
+- `SHA256SUMS.txt`
+- `SHA256SUMS.txt.minisig`
+- `minisign.pub`
+
+`SHA256SUMS.txt` は配布 zip の SHA256 一覧です。まず `minisign` 署名で checksum ファイル自体が改ざんされていないことを確認し、その後に各 zip の SHA256 を照合します。
+
+### macOS / Linux
+
+`minisign` が未導入なら先に入れます。
+
+```bash
+brew install minisign
+```
+
+公開鍵ファイルを使って署名を検証します。
+
+```bash
+minisign -V -p minisign.pub -m SHA256SUMS.txt -x SHA256SUMS.txt.minisig
+```
+
+公開鍵ファイルを使わず、公開鍵文字列を直接指定しても検証できます。
+
+```bash
+minisign -V \
+  -P 'RWSvYsD6R8W/A5jdQPZwlTVijBYRY7znIRgnTSfZeZUAhYt+KrjnCf6i' \
+  -m SHA256SUMS.txt \
+  -x SHA256SUMS.txt.minisig
+```
+
+署名検証後に配布 zip の SHA256 を照合します。
+
+```bash
+shasum -a 256 --check SHA256SUMS.txt
+```
+
+### Windows PowerShell
+
+`minisign.exe` を使って署名を検証します。`minisign.exe` へパスが通っていない場合はフルパスで指定してください。
+
+```powershell
+minisign -V -p .\minisign.pub -m .\SHA256SUMS.txt -x .\SHA256SUMS.txt.minisig
+```
+
+PowerShell で配布 zip の SHA256 を照合します。
+
+```powershell
+$expected = @{}
+Get-Content .\SHA256SUMS.txt | ForEach-Object {
+  if ($_ -match '^([0-9a-f]{64}) \*(.+)$') {
+    $expected[$Matches[2]] = $Matches[1].ToLower()
+  }
+}
+
+$expected.Keys | Sort-Object | ForEach-Object {
+  $actual = (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower()
+  if ($actual -ne $expected[$_]) {
+    throw "SHA256 mismatch: $_"
+  }
+  Write-Host "OK $_"
+}
+```
+
+`minisign` の trusted comment は `Applied-Medicine-list-renewer release checksums` です。この文字列も検証時に確認してください。
+
 ## ローカル実行
 
 ### CLI
