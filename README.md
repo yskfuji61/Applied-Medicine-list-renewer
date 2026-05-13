@@ -1,6 +1,6 @@
 # 薬剤リスト変換アプリ
 
-武蔵野向けの新 CSV 群を、旧採用医薬品リスト互換の 5 ビューへ deterministic に変換し、差分レポートまで生成するアプリです。macOS standalone、Windows standalone、Docker CLI 実行をサポートします。配布物には実データを同梱しません。
+採用医薬品リストファイルを、旧採用医薬品リストを互換する形でdeterministic に変換し、差分レポートまで生成するアプリです。macOS standalone、Windows standalone、Docker CLI 実行をサポートします。配布物には実データを同梱しません。
 
 ## 現在の構成
 
